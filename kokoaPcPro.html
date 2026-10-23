@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="fi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kokoa PC Pro</title>
+    <style>
+      :root {
+        --bg-dark: #0f172a;
+        --card-bg: #1e293b;
+        --accent-green: #10b981;
+        --accent-blue: #3b82f6;
+        --accent-yellow: #f59e0b;
+        --accent-red: #ef4444;
+        --text-light: #f8fafc;
+        --text-dim: #94a3b8;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background-color: var(--bg-dark);
+        color: var(--text-light);
+        margin: 0;
+        padding: 15px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        box-sizing: border-box;
+        user-select: none;
+      }
+
+      .game-container {
+        background-color: var(--card-bg);
+        border-radius: 16px;
+        padding: 20px;
+        max-width: 950px;
+        width: 100%;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        border: 1px solid #334155;
+      }
+
+      header {
+        text-align: center;
+        border-bottom: 2px solid #334155;
+        padding-bottom: 10px;
+        margin-bottom: 15px;
+      }
+
+      h1 {
+        margin: 0 0 5px 0;
+        font-size: 1.5rem;
+        color: var(--accent-green);
+      }
+
+      .step-indicator {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 15px;
+        background: #0f172a;
+        padding: 8px 12px;
+        border-radius: 10px;
+        font-size: 0.8rem;
+        font-weight: bold;
+      }
+
+      .step {
+        color: var(--text-dim);
+      }
+      .step.active {
+        color: var(--accent-blue);
+      }
+      .step.done {
+        color: var(--accent-green);
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        gap: 20px;
+        min-height: 440px;
+      }
+
+      @media (max-width: 768px) {
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .panel {
+        background-color: #0f172a;
+        border-radius: 12px;
+        padding: 15px;
+        border: 1px solid #334155;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .panel-title {
+        font-size: 0.9rem;
+        font-weight: bold;
+        color: var(--accent-blue);
+        margin-bottom: 12px;
+        text-transform: uppercase;
+      }
+
+      .parts-container {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        width: 100%;
+      }
+
+      .draggable-part {
+        background-color: #1e293b;
+        border: 2px solid #475569;
+        border-radius: 10px;
+        padding: 10px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: grab;
+      }
+
+      .draggable-part.installed {
+        opacity: 0.25;
+        cursor: not-allowed;
+        border-color: #334155;
+      }
+
+      .part-icon {
+        width: 50px;
+        height: 50px;
+        background: #0f172a;
+        border-radius: 8px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border: 1px solid #334155;
+        flex-shrink: 0;
+        transition: transform 0.3s ease;
+      }
+
+      .part-info {
+        text-align: left;
+        flex-grow: 1;
+      }
+      .part-name {
+        font-weight: bold;
+        font-size: 0.85rem;
+      }
+      .part-desc {
+        font-size: 0.72rem;
+        color: var(--text-dim);
+      }
+
+      .align-status {
+        font-size: 0.68rem;
+        font-weight: bold;
+        margin-top: 3px;
+      }
+      .align-status.ok {
+        color: var(--accent-green);
+      }
+      .align-status.warn {
+        color: var(--accent-yellow);
+      }
+
+      .btn-rotate {
+        background: #334155;
+        border: 1px solid #64748b;
+        color: #fff;
+        padding: 6px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.75rem;
+        font-weight: bold;
+      }
+
+      .board-canvas {
+        width: 100%;
+        height: 100%;
+        background-color: #060b14;
+        border-radius: 12px;
+        border: 2px solid #334155;
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 380px;
+      }
+
+      .drop-zone {
+        position: absolute;
+        border: 2px dashed var(--accent-yellow);
+        border-radius: 8px;
+        background-color: rgba(245, 158, 11, 0.08);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: center;
+        padding: 6px;
+        box-sizing: border-box;
+      }
+
+      .drop-zone.filled {
+        border: 2px solid var(--accent-green);
+        background-color: rgba(16, 185, 129, 0.12);
+      }
+
+      .slot-checklist {
+        display: flex;
+        gap: 6px;
+        font-size: 0.65rem;
+        background: rgba(15, 23, 42, 0.9);
+        padding: 3px 6px;
+        border-radius: 4px;
+        width: 100%;
+        justify-content: space-around;
+      }
+
+      .chk-item {
+        color: var(--text-dim);
+      }
+      .chk-item.done {
+        color: var(--accent-green);
+        font-weight: bold;
+      }
+
+      .btn-lock {
+        background: var(--accent-yellow);
+        color: #000;
+        border: none;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: bold;
+        cursor: pointer;
+      }
+      .btn-lock.unlocked {
+        background: var(--accent-green);
+      }
+
+      .info-box {
+        margin-top: 15px;
+        background-color: #0f172a;
+        padding: 12px 14px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        color: #e2e8f0;
+        border-left: 4px solid var(--accent-yellow);
+      }
+
+      .btn-action {
+        background-color: var(--accent-green);
+        color: #000;
+        border: none;
+        padding: 12px;
+        border-radius: 8px;
+        font-weight: bold;
+        font-size: 0.95rem;
+        cursor: pointer;
+        margin-top: 12px;
+        width: 100%;
+      }
+      .btn-action:disabled {
+        background-color: #475569;
+        color: var(--text-dim);
+        cursor: not-allowed;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="game-container">
+      <header>
+        <h1>🖥️ Kokoa PC Pro</h1>
+        <div style="font-size: 0.8rem; color: var(--text-dim)">
+          Avaa vipu, käännä oikeaan asentoon ja asenna!
+        </div>
+      </header>
+
+      <div class="step-indicator">
+        <div class="step active" id="step-1">1. Emolevy</div>
+        <div class="step" id="step-2">2. Kotelo</div>
+        <div class="step" id="step-3">3. Kaapelit</div>
+        <div class="step" id="step-4">4. Vianetsintä</div>
+        <div class="step" id="step-5">5. BIOS & OS</div>
+      </div>
+
+      <div class="workspace">
+        <div class="panel">
+          <div class="panel-title" id="parts-title">Osat</div>
+          <div class="parts-container" id="parts-list"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title" id="assembly-title">Asennusalue</div>
+          <div class="board-canvas" id="board-canvas"></div>
+        </div>
+      </div>
+
+      <div class="info-box" id="info-box">
+        🔑 Käännä jokainen osa 🔄-napista oikeaan kulmaan ja avaa vipu ennen
+        asennusta!
+      </div>
+
+      <button class="btn-action" id="next-btn" disabled onclick="nextStage()">
+        Seuraava vaihe ➔
+      </button>
+      <div id="vibe-back-to-games-wrap"><a id="vibe-back-to-games" href="index.html" aria-label="Valitse toinen peli">Valitse toinen peli</a></div>
+    </div>
+
+    <script>
+      let currentStage = 1;
+      let installedParts = [];
+      let partRotations = {
+        cpu: 0,
+        ram: 90,
+        ssd: 270,
+        mobo: 90,
+        psu: 180,
+        gpu: 270,
+        p24: 90,
+        pcpu: 270,
+        pgpu: 180,
+      };
+      let slotStates = {};
+      let randomBugComponent = Math.random() < 0.5 ? "cpu" : "ram";
+
+      // Suorat SVG-kuvakkeet selkeinä merkkijonoina
+      const icons = {
+        cpu: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></svg>',
+        ram: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><rect x="2" y="8" width="20" height="8" rx="1"/><path d="M6 8v8M10 8v8M14 8v8M18 8v8"/></svg>',
+        ssd: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="7" cy="12" r="1.5" fill="#ef4444"/><path d="M14 10h4M14 14h2"/></svg>',
+        mobo: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="M6 6h4v4H6zM14 6h4v4h-4zM6 14h12v4H6z"/></svg>',
+        psu: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><circle cx="12" cy="12" r="4"/><path d="M6 8h2M16 8h2"/></svg>',
+        gpu: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="8" cy="12" r="3"/><circle cx="16" cy="12" r="3"/></svg>',
+        p24: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/><rect x="16" y="4" width="4" height="16" rx="1" fill="#1e293b"/></svg>',
+        pcpu: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M6 4l12 16M18 4L6 20"/></svg>',
+        pgpu: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><path d="M4 12h16M12 4l8 8-8 8"/></svg>',
+      };
+
+      const partsData = {
+        cpu: {
+          name: "Prosessori (CPU)",
+          reqRot: 180,
+          desc: "Käännä kolmio alas (180°).",
+        },
+        ram: {
+          name: "RAM-muisti",
+          reqRot: 0,
+          desc: "Käännä lovi vasemmalle (0°).",
+        },
+        ssd: {
+          name: "M.2 SSD",
+          reqRot: 0,
+          desc: "Käännä täppä vasemmalle (0°).",
+        },
+        mobo: {
+          name: "Koottu Emolevy",
+          reqRot: 0,
+          desc: "Aseta koteloon (0°).",
+        },
+        psu: {
+          name: "Virtalähde (PSU)",
+          reqRot: 0,
+          desc: "Tuuletin alaspäin (0°).",
+        },
+        gpu: {
+          name: "Näytönohjain (GPU)",
+          reqRot: 0,
+          desc: "PCIe-paikkaan (0°).",
+        },
+        p24: {
+          name: "24-pin ATX Virta",
+          reqRot: 0,
+          desc: "Lukituskynsi oikein (0°).",
+        },
+        pcpu: {
+          name: "8-pin CPU Virta",
+          reqRot: 0,
+          desc: "Prosessorin virta (0°).",
+        },
+        pgpu: {
+          name: "PCIe Virta",
+          reqRot: 0,
+          desc: "Näytönohjaimen virta (0°).",
+        },
+      };
+
+      const stages = {
+        1: {
+          titleParts: "1. Emolevyn Osat",
+          titleBoard: "Emolevy",
+          info: "🔑 Pyöräytä osaa 🔄-napista oikeaan kulmaan ja avaa vipu ennen asennusta!",
+          parts: ["cpu", "ram", "ssd"],
+          slots: [
+            {
+              id: "slot-cpu",
+              accepts: "cpu",
+              label: "CPU Socket (Vaatii 180°)",
+              x: 40,
+              y: 25,
+              w: 160,
+              h: 110,
+            },
+            {
+              id: "slot-ram",
+              accepts: "ram",
+              label: "RAM Slot (Vaatii 0°)",
+              x: 40,
+              y: 150,
+              w: 290,
+              h: 70,
+            },
+            {
+              id: "slot-ssd",
+              accepts: "ssd",
+              label: "M.2 Slot (Vaatii 0°)",
+              x: 40,
+              y: 240,
+              w: 290,
+              h: 70,
+            },
+          ],
+        },
+        2: {
+          titleParts: "2. Kotelon Osat",
+          titleBoard: "PC-Kotelo",
+          info: "🔑 Käännä emolevy, virtalähde ja näytönohjain oikeaan asentoon (0°) ennen pudotusta!",
+          parts: ["mobo", "psu", "gpu"],
+          slots: [
+            {
+              id: "slot-mobo",
+              accepts: "mobo",
+              label: "Emolevypaikka (Vaatii 0°)",
+              x: 30,
+              y: 30,
+              w: 220,
+              h: 180,
+            },
+            {
+              id: "slot-gpu",
+              accepts: "gpu",
+              label: "GPU Slot (Vaatii 0°)",
+              x: 260,
+              y: 30,
+              w: 110,
+              h: 180,
+            },
+            {
+              id: "slot-psu",
+              accepts: "psu",
+              label: "PSU Bay (Vaatii 0°)",
+              x: 30,
+              y: 240,
+              w: 340,
+              h: 70,
+            },
+          ],
+        },
+        3: {
+          titleParts: "3. Virtakaapelit",
+          titleBoard: "Kaapelointi",
+          info: "🔑 Pyöräytä kaapelit oikeaan kulmaan (0°), avaa kiinnikkeet ja naksauta johdot kiinni!",
+          parts: ["p24", "pcpu", "pgpu"],
+          slots: [
+            {
+              id: "slot-p24",
+              accepts: "p24",
+              label: "24-pin ATX Virta (Vaatii 0°)",
+              x: 40,
+              y: 30,
+              w: 320,
+              h: 70,
+            },
+            {
+              id: "slot-pcpu",
+              accepts: "pcpu",
+              label: "CPU Lisävirta (Vaatii 0°)",
+              x: 40,
+              y: 120,
+              w: 320,
+              h: 70,
+            },
+            {
+              id: "slot-pgpu",
+              accepts: "pgpu",
+              label: "GPU Lisävirta (Vaatii 0°)",
+              x: 40,
+              y: 210,
+              w: 320,
+              h: 70,
+            },
+          ],
+        },
+      };
+
+      function rotatePart(pId) {
+        partRotations[pId] = (partRotations[pId] + 90) % 360;
+        const iconEl = document.querySelector("#icon-" + pId);
+        if (iconEl)
+          iconEl.style.transform = "rotate(" + partRotations[pId] + "deg)";
+
+        const statusEl = document.getElementById("status-" + pId);
+        const p = partsData[pId];
+        if (statusEl) {
+          if (partRotations[pId] === p.reqRot) {
+            statusEl.className = "align-status ok";
+            statusEl.innerText = "✅ Suunta OK (" + partRotations[pId] + "°)";
+          } else {
+            statusEl.className = "align-status warn";
+            statusEl.innerText =
+              "🔄 Käännä (" + partRotations[pId] + "° / " + p.reqRot + "°)";
+          }
+        }
+      }
+
+      function toggleLock(slotId) {
+        const s = slotStates[slotId];
+        if (!s) return;
+        if (!s.fitted) s.unlocked = !s.unlocked;
+        else s.locked = !s.locked;
+        updateSlotUI(slotId);
+      }
+
+      function updateSlotUI(slotId) {
+        const s = slotStates[slotId];
+        const btn = document.getElementById("btn-" + slotId);
+        const u = document.getElementById("u-" + slotId);
+        const f = document.getElementById("f-" + slotId);
+        const l = document.getElementById("l-" + slotId);
+
+        if (u) u.className = "chk-item " + (s.unlocked ? "done" : "");
+        if (f) f.className = "chk-item " + (s.fitted ? "done" : "");
+        if (l) l.className = "chk-item " + (s.locked ? "done" : "");
+
+        if (btn) {
+          if (!s.fitted) {
+            btn.innerText = s.unlocked ? "🔓 Vipu Auki" : "🔒 Avaa Vipu";
+            btn.className = "btn-lock " + (s.unlocked ? "unlocked" : "");
+          } else {
+            btn.innerText = s.locked ? "🔒 Lukittu" : "⚠️ Sulje Vipu";
+            btn.className = "btn-lock " + (s.locked ? "" : "unlocked");
+          }
+        }
+      }
+
+      function renderStage() {
+        installedParts = [];
+        document.getElementById("next-btn").disabled = true;
+
+        for (let i = 1; i <= 5; i++) {
+          const el = document.getElementById("step-" + i);
+          el.className = "step";
+          if (i < currentStage) el.className += " done";
+          if (i === currentStage) el.className += " active";
+        }
+
+        if (currentStage <= 3) {
+          const stage = stages[currentStage];
+          document.getElementById("parts-title").innerText = stage.titleParts;
+          document.getElementById("assembly-title").innerText =
+            stage.titleBoard;
+          document.getElementById("info-box").innerText = stage.info;
+
+          const partsList = document.getElementById("parts-list");
+          partsList.innerHTML = "";
+          stage.parts.forEach((pId) => {
+            const p = partsData[pId];
+            const card = document.createElement("div");
+            card.className = "draggable-part";
+            card.id = "part-" + pId;
+            card.draggable = true;
+            card.ondragstart = (e) => e.dataTransfer.setData("text/plain", pId);
+
+            const currentRot = partRotations[pId];
+            const isOk = currentRot === p.reqRot;
+
+            card.innerHTML = `
+                    <div class="part-icon" id="icon-${pId}">${icons[pId]}</div>
+                    <div class="part-info">
+                        <div class="part-name">${p.name}</div>
+                        <div class="part-desc">${p.desc}</div>
+                        <div class="align-status ${
+                          isOk ? "ok" : "warn"
+                        }" id="status-${pId}">
+                            ${
+                              isOk
+                                ? "✅ Suunta OK (" + currentRot + "°)"
+                                : "🔄 Käännä (" +
+                                  currentRot +
+                                  "° / " +
+                                  p.reqRot +
+                                  "°)"
+                            }
+                        </div>
+                    </div>
+                    <button class="btn-rotate" onclick="rotatePart('${pId}')">🔄 90°</button>
+                `;
+            partsList.appendChild(card);
+
+            const iconEl = card.querySelector(".part-icon");
+            if (iconEl)
+              iconEl.style.transform = "rotate(" + currentRot + "deg)";
+          });
+
+          const canvas = document.getElementById("board-canvas");
+          canvas.innerHTML = "";
+
+          stage.slots.forEach((slot) => {
+            slotStates[slot.id] = {
+              unlocked: false,
+              fitted: false,
+              locked: false,
+            };
+            const zone = document.createElement("div");
+            zone.className = "drop-zone";
+            zone.id = slot.id;
+            zone.style.left = slot.x + "px";
+            zone.style.top = slot.y + "px";
+            zone.style.width = slot.w + "px";
+            zone.style.height = slot.h + "px";
+
+            zone.innerHTML = `
+                    <div style="font-size:0.75rem; font-weight:bold; color:var(--accent-yellow);" id="lbl-${slot.id}">${slot.label}</div>
+                    <div class="slot-checklist">
+                        <span class="chk-item" id="u-${slot.id}">1.Vipu</span>
+                        <span class="chk-item" id="f-${slot.id}">2.Asenna</span>
+                        <span class="chk-item" id="l-${slot.id}">3.Lukitse</span>
+                    </div>
+                    <button class="btn-lock" id="btn-${slot.id}" onclick="toggleLock('${slot.id}')">🔒 Avaa Vipu</button>
+                `;
+
+            zone.ondragover = (e) => e.preventDefault();
+            zone.ondrop = (e) => {
+              e.preventDefault();
+              const pId = e.dataTransfer.getData("text/plain");
+              if (pId === slot.accepts) installPart(pId, slot.id);
+              else alert("❌ Väärä paikka!");
+            };
+            canvas.appendChild(zone);
+          });
+        } else if (currentStage === 4) {
+          renderTroubleshoot();
+        } else {
+          renderBios();
+        }
+      }
+
+      function installPart(pId, slotId) {
+        const p = partsData[pId];
+        const s = slotStates[slotId];
+
+        if (!s.unlocked) {
+          alert(
+            "⚠️ Kanta/liitin on lukittu! Avaa vipu tai kynsi ensin napista."
+          );
+          return;
+        }
+
+        if (partRotations[pId] !== p.reqRot) {
+          alert(
+            "⚠️ VÄÄRÄ KULMA! Osa on asennossa " +
+              partRotations[pId] +
+              "°, mutta se pitää kääntää 🔄-napista kulmaan " +
+              p.reqRot +
+              "° ennen kuin se sopii paikalleen!"
+          );
+          return;
+        }
+
+        s.fitted = true;
+        s.locked = true;
+        updateSlotUI(slotId);
+
+        const z = document.getElementById(slotId);
+        z.classList.add("filled");
+        document.getElementById("lbl-" + slotId).innerText =
+          "💥 KLIK! " + p.name;
+
+        const card = document.getElementById("part-" + pId);
+        if (card) {
+          card.classList.add("installed");
+          card.draggable = false;
+        }
+
+        if (!installedParts.includes(pId)) installedParts.push(pId);
+        if (installedParts.length === stages[currentStage].parts.length) {
+          document.getElementById("next-btn").disabled = false;
+          document.getElementById("info-box").innerText =
+            "🎉 Kaikki osat käännetty ja asennettu oikeaoppisesti! Jatka eteenpäin.";
+        }
+      }
+
+      function renderTroubleshoot() {
+        document.getElementById("parts-title").innerText = "Vianetsintä";
+        document.getElementById("assembly-title").innerText = "Testaus (POST)";
+        document.getElementById("info-box").innerText =
+          "⚠️ VIRHE! Kone ei käynnisty. Etsi emolevyltä löysällä oleva komponentti (" +
+          randomBugComponent.toUpperCase() +
+          ")!";
+
+        document.getElementById("parts-list").innerHTML = `
+            <div style="color:var(--accent-red); font-weight:bold; font-size:0.85rem;">
+                ❌ POST Fault: ${randomBugComponent.toUpperCase()} Error!
+            </div>
+        `;
+
+        const canvas = document.getElementById("board-canvas");
+        canvas.innerHTML = `
+            <div style="position:relative; width:100%; height:100%; background:#064e3b; display:flex; justify-content:center; align-items:center;">
+                <div onclick="fixBug('cpu')" style="position:absolute; top:40px; left:100px; width:90px; height:90px; border:3px dashed ${
+                  randomBugComponent === "cpu" ? "red" : "transparent"
+                }; cursor:pointer; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.4);">CPU</div>
+                <div onclick="fixBug('ram')" style="position:absolute; top:160px; left:60px; width:260px; height:50px; border:3px dashed ${
+                  randomBugComponent === "ram" ? "red" : "transparent"
+                }; cursor:pointer; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.4);">RAM</div>
+            </div>
+        `;
+      }
+
+      function fixBug(p) {
+        if (p === randomBugComponent) {
+          alert(
+            "✅ Hienoa! Huomasit, että " +
+              p.toUpperCase() +
+              " oli löysällä, ja naksautit sen kiinni!"
+          );
+          document.getElementById("next-btn").disabled = false;
+          document.getElementById("info-box").innerText =
+            "🎉 Vika korjattu! Jatka BIOS-asennukseen.";
+        } else {
+          alert("❌ Tämä osa on kunnossa!");
+        }
+      }
+
+      function renderBios() {
+        document.getElementById("parts-title").innerText = "Asennusmedia";
+        document.getElementById("assembly-title").innerText = "BIOS & OS";
+        document.getElementById("info-box").innerText =
+          "1. Valitse USB-tikku. 2. Muuta boot-järjestys. 3. Asenna käyttöjärjestelmä.";
+
+        document.getElementById("parts-list").innerHTML = `
+            <div class="draggable-part" id="part-usb" draggable="true" ondragstart="event.dataTransfer.setData('text/plain', 'usb')">
+                <div class="part-icon">${icons.usb || "💾"}</div>
+                <div class="part-info">
+                    <div class="part-name">Windows USB-Tikku</div>
+                    <div class="part-desc">Asennusmedia</div>
+                </div>
+            </div>
+        `;
+
+        const canvas = document.getElementById("board-canvas");
+        canvas.innerHTML = `
+            <div class="screen-sim" id="screen" style="width:100%; height:100%; background:#050505; border-radius:8px; padding:15px; font-family:monospace; color:#00ff00; box-sizing:border-box; display:flex; flex-direction:column; justify-content:space-between;">
+                <div>
+                    <div style="color:var(--accent-yellow); font-weight:bold;">--- UEFI BIOS UTILITY ---</div>
+                    <div style="font-size:0.75rem; color:#94a3b8; margin:5px 0;">Vedä ja pudota USB-tikku tähän alueeseen:</div>
+                    <div id="usb-drop-target" style="border:2px dashed var(--accent-blue); padding:15px; text-align:center; border-radius:6px; background:rgba(59,130,246,0.1); cursor:pointer;" ondragover="event.preventDefault()" ondrop="dropUsb(event)">
+                        📥 Pudota USB-tikku tähän
+                    </div>
+                    <div class="bios-item" id="b-btn" style="display:none; background:#1e293b; padding:8px; border-radius:4px; margin-top:10px; cursor:pointer;" onclick="setBoot()">👉 Boot 1: USB Flash Drive</div>
+                </div>
+                <button class="btn-action" id="os-install-btn" style="display:none;" onclick="installOS()">💾 Käynnistä Windowsin asennus (F10)</button>
+            </div>
+        `;
+      }
+
+      function dropUsb(e) {
+        e.preventDefault();
+        const data = e.dataTransfer.getData("text/plain");
+        if (data === "usb") {
+          const target = document.getElementById("usb-drop-target");
+          target.style.borderColor = "var(--accent-green)";
+          target.style.background = "rgba(16,185,129,0.15)";
+          target.innerHTML = "✅ USB-Tikku kytketty porttiin!";
+          document.getElementById("b-btn").style.display = "block";
+          document.getElementById("part-usb").style.opacity = "0.25";
+          document.getElementById("part-usb").draggable = false;
+        }
+      }
+
+      let bootSet = false;
+      function setBoot() {
+        bootSet = true;
+        document.getElementById("b-btn").style.borderColor =
+          "var(--accent-green)";
+        document.getElementById("b-btn").innerText =
+          "✅ Boot 1: USB (Asetettu)";
+        document.getElementById("os-install-btn").style.display = "block";
+      }
+
+      function installOS() {
+        if (!bootSet) {
+          alert("⚠️ Aseta ensin USB-tikku ensimmäiseksi boot-laitteeksi!");
+          return;
+        }
+        document.getElementById("screen").innerHTML = `
+            <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100%; text-align:center;">
+                <div style="color:var(--accent-green); font-size:1.3rem; font-weight:bold;">🎉 ONNITTELUT!</div>
+                <div style="font-size:0.85rem; color:#fff; margin-top:10px;">Tietokone koottu, kohdistettu, lukittu, vika korjattu ja Windows asennettu! 🚀</div>
+                <button class="btn-action" style="width:auto; margin-top:15px; padding:8px 16px;" onclick="location.reload()">🔄 Pelaa uudelleen</button>
+            </div>
+        `;
+        document.getElementById("parts-title").innerText = "Valmis!";
+        document.getElementById("assembly-title").innerText =
+          "Järjestelmä toimii";
+        document.getElementById(
+          "parts-list"
+        ).innerHTML = `<div style="color:var(--accent-green); font-weight:bold;">🏆 Peli läpäisty!</div>`;
+        document.getElementById("info-box").innerHTML =
+          "🏆 Läpäisit koko tietokoneen rakennus- ja vianetsintäpelin onnistuneesti!";
+      }
+
+      function nextStage() {
+        if (currentStage < 5) {
+          currentStage++;
+          renderStage();
+        }
+      }
+
+      window.onload = function () {
+        renderStage();
+      };
+    </script>
+  
+<!-- Vibe-pelit: yhteinen paluupainike ja käyttämättömyysohjaus -->
+<style id="vibe-navigation-style">
+  #vibe-back-to-games-wrap { width:100%; max-width:100%; box-sizing:border-box; display:flex; justify-content:center; align-items:center; margin:24px auto 30px; padding:0 16px; grid-column:1 / -1; flex-shrink:0; }
+  #vibe-back-to-games { display:inline-flex!important; align-items:center!important; justify-content:center!important; box-sizing:border-box!important; background:#44e5cc!important; color:#071627!important; border:2px solid #f2fffd!important; border-radius:999px!important; padding:16px 28px!important; font:800 18px/1.25 system-ui,Arial,sans-serif!important; text-decoration:none!important; box-shadow:0 5px 22px #0007!important; max-width:100%!important; min-height:56px!important; cursor:pointer!important; text-align:center!important; }
+  #vibe-back-to-games:hover,#vibe-back-to-games:focus-visible {background:#a5fff0!important;outline:3px solid #ffffff!important;outline-offset:2px!important;}
+  @media(max-width:420px){#vibe-back-to-games {font-size:17px!important;padding:15px 22px!important;}}
+</style>
+
+<script id="vibe-idle-navigation">
+(function () {
+  'use strict';
+  const IDLE_AFTER_MS = 60 * 1000; // Muuta aikaa tästä (millisekuntia).
+  let lastActivity = Date.now();
+  let timeoutId;
+  function goToGames() { window.location.replace('index.html'); }
+  function resetIdleCountdown() {
+    lastActivity = Date.now();
+    window.clearTimeout(timeoutId);
+    timeoutId = window.setTimeout(goToGames, IDLE_AFTER_MS);
+  }
+  ['pointerdown', 'pointermove', 'keydown', 'touchstart', 'wheel'].forEach(function(type) {
+    document.addEventListener(type, resetIdleCountdown, {passive:true, capture:true});
+  });
+  // Tarkistetaan aika myös, kun selain palautuu taustalta.
+  document.addEventListener('visibilitychange', function() {
+    if (!document.hidden && Date.now() - lastActivity >= IDLE_AFTER_MS) goToGames();
+  });
+  resetIdleCountdown();
+})();
+</script>
+</body>
+</html>

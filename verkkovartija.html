@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Verkkovartija</title>
+  <link rel="stylesheet" href="verkkovartija/style.css">
+</head>
+<body data-naytto="naytto-aloitus">
+  <div class="varoitus piilossa" id="passiivisuus-varoitus" role="alert"></div>
+  <main class="peli">
+
+    <!-- Yläpalkki näkyy koko pelin ajan (paitsi aloitusruudussa) -->
+    <header class="ylapalkki">
+      <div>Pisteet: <strong id="pisteet">0</strong></div>
+      <div class="mittari">Aika: <strong id="aika-teksti">300 s</strong>
+        <div class="palkki"><div class="taytto aika" id="aika-taytto"></div></div>
+      </div>
+      <div class="mittari">Tietoturva: <strong id="turva-teksti">100 %</strong>
+        <div class="palkki"><div class="taytto turva" id="turva-taytto"></div></div>
+      </div>
+    </header>
+
+    <!-- NÄYTTÖ 1: aloitus -->
+    <section class="naytto" id="naytto-aloitus">
+      <h1>Verkkovartija</h1>
+      <p class="johdanto">Olet yrityksen uusi tietoturvavahti. Viestejä tulee tauotta, ja osa niistä on huijauksia. Suojaa yritys ennen kuin on myöhäistä.</p>
+      <ul class="ohjeet">
+        <li><strong>Tutki viestit.</strong> Klikkaa epäilyttäviä kohtia tekstistä ja käytä työkaluja.</li>
+        <li><strong>Työkaluja on vähän.</strong> Ne eivät riitä kaikkiin viesteihin, joten valitse viisaasti.</li>
+        <li><strong>Yhteinen aikaraja.</strong> Koko pelin aikaa on viisi minuuttia.</li>
+      </ul>
+      <button class="nappi aloita" id="nappi-aloita">Aloita vuoro</button>
+    </section>
+
+    <!-- NÄYTTÖ 2: viestiaalto -->
+    <section class="naytto piilossa" id="naytto-viestit">
+      <p class="aaltorivi" id="aaltorivi"></p>
+
+      <article class="viesti">
+        <p class="viesti-tyyppi" id="viesti-tyyppi"></p>
+        <p class="lahettaja-rivi">Lähettäjä: <span class="paljasta" id="lahettaja"></span></p>
+        <h2 id="viesti-otsikko"></h2>
+        <p class="viesti-teksti" id="viesti-teksti"></p>
+        <button class="linkki piilossa" id="linkki"></button>
+      </article>
+
+      <div class="tyokalut">
+        <button class="tyokalu" id="tyo-lahettaja"></button>
+        <button class="tyokalu" id="tyo-linkki"></button>
+        <button class="tyokalu" id="tyo-kollega"></button>
+      </div>
+
+      <p class="tilarivi" id="tilarivi"></p>
+
+      <section class="loki">
+        <h3>Tutkimusloki</h3>
+        <ul id="loki-lista"></ul>
+      </section>
+
+      <p class="selitys piilossa" id="selitys"></p>
+
+      <div class="napit">
+        <button class="nappi aito" id="nappi-aito">Aito</button>
+        <button class="nappi huijaus" id="nappi-huijaus">Huijaus</button>
+        <button class="nappi seuraava piilossa" id="nappi-seuraava">Seuraava viesti</button>
+      </div>
+    </section>
+
+    <!-- NÄYTTÖ: salasanapaja (mini-peli) -->
+    <section class="naytto piilossa" id="naytto-salasana">
+      <p class="huomio" id="salasana-huomio"></p>
+      <h2>Salasanapaja</h2>
+      <p>Huijari yrittää murtaa palvelimen salasanan. Keksi salasana, jota hän ei saa auki. Älä käytä oikeaa salasanaasi!</p>
+      <input class="salasana-kentta" id="salasana-kentta" type="text" maxlength="40"
+             autocomplete="off" spellcheck="false" placeholder="Kirjoita salasana tähän">
+      <p class="murtorivi">Arvioitu murtoaika: <strong id="murtoaika">-</strong></p>
+      <div class="palkki iso"><div class="taytto taso0" id="vahvuus-taytto"></div></div>
+      <p class="vahvuus-teksti" id="vahvuus-teksti"></p>
+      <ul class="vihjelista" id="salasana-vihjeet"></ul>
+      <button class="nappi seuraava" id="nappi-lukitse">Lukitse salasana</button>
+    </section>
+
+    <!-- NÄYTTÖ: bugi koodissa (mini-peli) -->
+    <section class="naytto piilossa" id="naytto-bugi">
+      <p class="huomio" id="bugi-huomio"></p>
+      <h2>Bugi koodissa</h2>
+      <p class="aaltorivi" id="bugi-laskuri"></p>
+      <p id="bugi-tehtava"></p>
+      <div class="koodi" id="bugi-koodi"></div>
+      <p class="selitys piilossa" id="bugi-selitys"></p>
+      <button class="nappi seuraava piilossa" id="bugi-seuraava">Seuraava</button>
+    </section>
+
+    <!-- NÄYTTÖ: loppuhyökkäys -->
+    <section class="naytto piilossa" id="naytto-finaali">
+      <p class="huomio" id="finaali-huomio"></p>
+      <h2>Verkkohyökkäys!</h2>
+      <p id="finaali-ohje">Haittaohjelma leviää verkossa. Eristä tartunnan saaneet koneet klikkaamalla niitä. Älä eristä puhtaita koneita!</p>
+      <p class="aaltorivi" id="finaali-laskuri"></p>
+      <div class="verkko" id="finaali-verkko" aria-label="Verkon tietokoneet"></div>
+      <p class="selitys piilossa" id="finaali-palaute" role="status"></p>
+      <button class="nappi seuraava piilossa" id="finaali-valmis">Jatka</button>
+    </section>
+
+    <!-- NÄYTTÖ 3: välinäyttö (mini-pelit ja loppuhyökkäys tulevat tähän) -->
+    <section class="naytto piilossa" id="naytto-valiaika">
+      <p class="huomio" id="valiaika-huomio"></p>
+      <h2 id="valiaika-otsikko"></h2>
+      <p id="valiaika-teksti"></p>
+      <button class="nappi seuraava" id="nappi-jatka">Jatka</button>
+    </section>
+
+    <!-- NÄYTTÖ 4: loppuruutu -->
+    <section class="naytto piilossa" id="naytto-loppu">
+      <h2 id="loppu-otsikko"></h2>
+      <p class="arvosana" id="loppu-arvosana"></p>
+      <p>Pisteet: <strong id="loppu-pisteet"></strong></p>
+      <h3>Missä onnistuit</h3>
+      <ul id="loppu-tilasto"></ul>
+      <div class="suositus">
+        <h3 id="suositus-otsikko"></h3>
+        <p id="suositus-teksti"></p>
+      </div>
+      <button class="nappi seuraava" id="nappi-uudelleen">Pelaa uudelleen</button>
+    </section>
+
+    <div id="vibe-back-to-games-wrap"><a id="vibe-back-to-games" href="index.html" aria-label="Valitse toinen peli">Valitse toinen peli</a></div>
+  </main>
+
+  <script src="verkkovartija/messages.js"></script>
+  <script src="verkkovartija/script.js"></script>
+  <script src="verkkovartija/salasana.js"></script>
+  <script src="verkkovartija/bugi.js"></script>
+  <script src="verkkovartija/finaali.js"></script>
+
+<!-- Vibe-pelit: yhteinen paluupainike ja käyttämättömyysohjaus -->
+<style id="vibe-navigation-style">
+  #vibe-back-to-games-wrap { width:100%; max-width:100%; box-sizing:border-box; display:flex; justify-content:center; align-items:center; margin:24px auto 30px; padding:0 16px; grid-column:1 / -1; flex-shrink:0; }
+  #vibe-back-to-games { display:inline-flex!important; align-items:center!important; justify-content:center!important; box-sizing:border-box!important; background:#44e5cc!important; color:#071627!important; border:2px solid #f2fffd!important; border-radius:999px!important; padding:16px 28px!important; font:800 18px/1.25 system-ui,Arial,sans-serif!important; text-decoration:none!important; box-shadow:0 5px 22px #0007!important; max-width:100%!important; min-height:56px!important; cursor:pointer!important; text-align:center!important; }
+  #vibe-back-to-games:hover,#vibe-back-to-games:focus-visible {background:#a5fff0!important;outline:3px solid #ffffff!important;outline-offset:2px!important;}
+  @media(max-width:420px){#vibe-back-to-games {font-size:17px!important;padding:15px 22px!important;}}
+</style>
+
+<script id="vibe-idle-navigation">
+(function () {
+  'use strict';
+  const IDLE_AFTER_MS = 60 * 1000; // Muuta aikaa tästä (millisekuntia).
+  let lastActivity = Date.now();
+  let timeoutId;
+  function goToGames() { window.location.replace('index.html'); }
+  function resetIdleCountdown() {
+    lastActivity = Date.now();
+    window.clearTimeout(timeoutId);
+    timeoutId = window.setTimeout(goToGames, IDLE_AFTER_MS);
+  }
+  ['pointerdown', 'pointermove', 'keydown', 'touchstart', 'wheel'].forEach(function(type) {
+    document.addEventListener(type, resetIdleCountdown, {passive:true, capture:true});
+  });
+  // Tarkistetaan aika myös, kun selain palautuu taustalta.
+  document.addEventListener('visibilitychange', function() {
+    if (!document.hidden && Date.now() - lastActivity >= IDLE_AFTER_MS) goToGames();
+  });
+  resetIdleCountdown();
+})();
+</script>
+</body>
+</html>

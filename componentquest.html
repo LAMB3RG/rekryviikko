@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#070d1b">
+<title>Component Quest</title>
+<link rel="stylesheet" href="componentquest/style.css">
+<style id="vibe-navigation-style">
+  #vibe-back-to-games-wrap { width:100%; max-width:100%; box-sizing:border-box; display:flex; justify-content:center; align-items:center; margin:24px auto 30px; padding:0 16px; grid-column:1 / -1; flex-shrink:0; }
+  #vibe-back-to-games { display:inline-flex!important; align-items:center!important; justify-content:center!important; box-sizing:border-box!important; background:#44e5cc!important; color:#071627!important; border:2px solid #f2fffd!important; border-radius:999px!important; padding:16px 28px!important; font:800 18px/1.25 system-ui,Arial,sans-serif!important; text-decoration:none!important; box-shadow:0 5px 22px #0007!important; max-width:100%!important; min-height:56px!important; cursor:pointer!important; text-align:center!important; }
+  #vibe-back-to-games:hover,#vibe-back-to-games:focus-visible {background:#a5fff0!important;outline:3px solid #ffffff!important;outline-offset:2px!important;}
+  @media(max-width:420px){#vibe-back-to-games {font-size:17px!important;padding:15px 22px!important;}}
+</style>
+</head>
+<body>
+<main class="page">
+  <header class="site-header">
+    <div class="brand-mark" aria-hidden="true">CQ</div>
+    <div><div class="eyebrow">IT-ALAN MINISEIKKAILU</div><h1>Component <span>Quest</span></h1></div>
+    <div class="header-chip"><span class="status-dot"></span> VALMIS PELATTAVAKSI</div>
+  </header>
+  <section class="game-frame" aria-label="Component Quest -selainpeli">
+    <canvas id="game" width="960" height="540" tabindex="0" aria-label="Component Quest -peli. Käytä A- ja D-näppäimiä tai nuolinäppäimiä ja hyppää välilyönnillä."></canvas>
+    
+  </section>
+  <footer class="below-game">
+    <div class="controls-help"><span class="keycap">A</span><span class="keycap">D</span> tai <span class="keycap">←</span><span class="keycap">→</span> liiku <span class="help-separator">·</span> <span class="keycap">SPACE</span> hyppää <span class="help-separator">·</span> paina ilmassa uudelleen: tuplahyppy</div>
+    <div class="offline-note"><span class="offline-icon">✦</span> Toimii paikallisesti selaimessa</div>
+  </footer>
+  <div id="vibe-back-to-games-wrap"><a id="vibe-back-to-games" href="index.html" aria-label="Valitse toinen peli">Valitse toinen peli</a></div>
+</main>
+<script src="componentquest/game.js"></script>
+<script id="vibe-idle-navigation">
+(function () {
+  'use strict';
+  const IDLE_AFTER_MS = 60 * 1000; // Muuta aikaa tästä (millisekuntia).
+  let lastActivity = Date.now();
+  let timeoutId;
+  function goToGames() { window.location.replace('index.html'); }
+  function resetIdleCountdown() {
+    lastActivity = Date.now();
+    window.clearTimeout(timeoutId);
+    timeoutId = window.setTimeout(goToGames, IDLE_AFTER_MS);
+  }
+  ['pointerdown', 'pointermove', 'keydown', 'touchstart', 'wheel'].forEach(function(type) {
+    document.addEventListener(type, resetIdleCountdown, {passive:true, capture:true});
+  });
+  // Tarkistetaan aika myös, kun selain palautuu taustalta.
+  document.addEventListener('visibilitychange', function() {
+    if (!document.hidden && Date.now() - lastActivity >= IDLE_AFTER_MS) goToGames();
+  });
+  resetIdleCountdown();
+})();
+</script>
+</body>
+</html>

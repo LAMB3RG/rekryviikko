@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="fi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cyber Quest – IT-seikkailu</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #0a1020;
+        color: #e8f3ff;
+        text-align: center;
+      }
+      header {
+        padding: 20px 10px;
+        background: #101c35;
+      }
+      h1 {
+        color: #4de6c1;
+        margin: 5px;
+      }
+      main {
+        max-width: 800px;
+        margin: auto;
+        padding: 16px;
+      }
+      .panel {
+        background: #15233d;
+        border: 1px solid #29476c;
+        border-radius: 14px;
+        padding: 16px;
+        margin: 12px 0;
+      }
+      #room {
+        position: relative;
+        height: 290px;
+        overflow: hidden;
+        border: 3px solid #4de6c1;
+        border-radius: 12px;
+        background-color: #0c172a;
+        background-image:
+          linear-gradient(#20304a 1px, transparent 1px),
+          linear-gradient(90deg, #20304a 1px, transparent 1px);
+        background-size: 30px 30px;
+      }
+      #player {
+        position: absolute;
+        left: 45%;
+        top: 65%;
+        width: 38px;
+        height: 38px;
+        display: grid;
+        place-items: center;
+        border-radius: 8px;
+        background: #4de6c1;
+        color: #07121d;
+        font-weight: bold;
+        transition:
+          left 0.08s,
+          top 0.08s;
+      }
+      .threat {
+        position: absolute;
+        border: 2px solid #ff6584;
+        background: #48223d;
+        color: white;
+        border-radius: 10px;
+        padding: 10px;
+        cursor: pointer;
+        font-weight: bold;
+      }
+      .threat:hover {
+        background: #79324e;
+      }
+      button {
+        border: 0;
+        border-radius: 9px;
+        background: #4de6c1;
+        color: #07121d;
+        padding: 11px 15px;
+        margin: 4px;
+        font-weight: bold;
+        cursor: pointer;
+      }
+      button:hover {
+        filter: brightness(1.1);
+      }
+      button:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      .secondary {
+        background: #314766;
+        color: white;
+      }
+      #message {
+        min-height: 28px;
+        color: #ffdb7d;
+      }
+      #questionArea {
+        text-align: left;
+      }
+      .answer {
+        display: block;
+        width: 100%;
+        text-align: left;
+        margin: 8px 0;
+        background: #263c5d;
+        color: white;
+      }
+      .answer.correct {
+        background: #176b59;
+      }
+      .answer.wrong {
+        background: #8b3048;
+      }
+      #controls {
+        margin: 12px;
+      }
+      footer {
+        padding: 20px;
+        color: #9bb0cb;
+        font-size: 13px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>⚡ Cyber Quest</h1>
+      <p>IT-seikkailu: torju uhat ja opi kyberturvasta!</p>
+    </header>
+
+    <main>
+      <div class="panel">
+        <strong id="roomTitle">Huone 1: Kirjautuminen</strong>
+        <p id="stats">XP: 0 | Huone: 1/5</p>
+        <p>
+          Liiku nuolinäppäimillä tai WASD-näppäimillä. Klikkaa uhkia torjuaksesi
+          ne!
+        </p>
+      </div>
+
+      <div id="room">
+        <div id="player">YOU</div>
+      </div>
+
+      <div class="panel">
+        <p id="message">Tervetuloa! Torju huoneen uhat aloittaaksesi.</p>
+        <button id="attackBtn">🛡️ Torju uhka</button>
+        <button id="restartBtn" class="secondary">🔄 Aloita alusta</button>
+        <div id="controls">
+          <div><button data-move="up">⬆️</button></div>
+          <div>
+            <button data-move="left">⬅️</button>
+            <button data-move="down">⬇️</button>
+            <button data-move="right">➡️</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="questionArea" class="panel" hidden>
+        <h2>💡 IT-tietovisa</h2>
+        <p id="question"></p>
+        <div id="answers"></div>
+      </div>
+
+      <div id="finishArea" class="panel" hidden>
+        <h2>🎉 Tehtävä suoritettu!</h2>
+        <p>
+          Olet selvittänyt kaikki viisi huonetta ja oppinut
+          kyberturvallisuudesta.
+        </p>
+        <p id="finalScore"></p>
+        <button id="playAgainBtn">Pelaa uudelleen</button>
+      </div>
+    </main>
+
+    <footer>Cyber Quest • Oppimispeli 9.-luokkalaisille</footer>
+
+    <script>
+      (() => {
+        const rooms = [
+          {
+            title: "Huone 1: Kirjautuminen",
+            threats: ["SPAM", "BOT"],
+            question:
+              "Saat viestin, jossa pyydetään kirjautumaan pankkiin oudon linkin kautta. Mitä teet?",
+            answers: [
+              "Klikkaan linkkiä heti",
+              "Tarkistan lähettäjän ja menen palveluun itse",
+              "Lähetän salasanani viestin lähettäjälle",
+            ],
+            correct: 1,
+            explanation:
+              "Hyvä! Epäilyttäviä linkkejä ei pidä avata. Mene palveluun itse kirjoittamalla osoite.",
+          },
+          {
+            title: "Huone 2: Salasanaturva",
+            threats: ["CRACK", "BOT"],
+            question: "Millainen salasana on yleensä turvallisin?",
+            answers: [
+              "123456",
+              "Oma etunimi",
+              "Pitkä ja ainutlaatuinen salasana",
+            ],
+            correct: 2,
+            explanation:
+              "Oikein! Käytä pitkiä, eri palveluissa erilaisia salasanoja. Salasananhallinta auttaa.",
+          },
+          {
+            title: "Huone 3: Verkko",
+            threats: ["VIRUS", "SPAM"],
+            question:
+              "Mitä kannattaa tehdä, jos julkinen Wi-Fi-verkko vaikuttaa epäilyttävältä?",
+            answers: [
+              "Välttää arkaluontoisten tietojen käyttöä ja valita luotettava verkko",
+              "Kirjautua kaikkiin palveluihin",
+              "Poistaa laitteen suojaukset",
+            ],
+            correct: 0,
+            explanation:
+              "Juuri niin! Käytä luotettavia verkkoja ja suosi suojattuja yhteyksiä.",
+          },
+          {
+            title: "Huone 4: Ohjelmistot",
+            threats: ["BUG", "MALWARE"],
+            question: "Miksi ohjelmistopäivitykset ovat tärkeitä?",
+            answers: [
+              "Ne muuttavat aina tietokoneen nopeammaksi",
+              "Ne voivat korjata tietoturva-aukkoja",
+              "Niitä ei koskaan tarvita",
+            ],
+            correct: 1,
+            explanation:
+              "Oikein! Päivitykset korjaavat usein tietoturvaongelmia ja virheitä.",
+          },
+          {
+            title: "Huone 5: Palvelinhuone",
+            threats: ["HACKER", "VIRUS"],
+            question:
+              "Mitä teet, jos saat epäilyttävän liitetiedoston tuntemattomalta?",
+            answers: [
+              "Avaan sen heti",
+              "Lähetän sen kaikille kavereille",
+              "En avaa sitä ja ilmoitan tarvittaessa opettajalle tai ylläpidolle",
+            ],
+            correct: 2,
+            explanation:
+              "Hienoa! Epäilyttävät liitteet voivat sisältää haittaohjelmia.",
+          },
+        ];
+
+        const roomEl = document.getElementById("room");
+        const playerEl = document.getElementById("player");
+        const titleEl = document.getElementById("roomTitle");
+        const statsEl = document.getElementById("stats");
+        const messageEl = document.getElementById("message");
+        const attackBtn = document.getElementById("attackBtn");
+        const questionArea = document.getElementById("questionArea");
+        const questionEl = document.getElementById("question");
+        const answersEl = document.getElementById("answers");
+        const finishArea = document.getElementById("finishArea");
+
+        let roomIndex = 0;
+        let xp = 0;
+        let threatsLeft = [];
+        let playerX = 45;
+        let playerY = 65;
+        let answering = false;
+        let gameOver = false;
+
+        function updateStats() {
+          statsEl.textContent =
+            "XP: " + xp + " | Huone: " + Math.min(roomIndex + 1, 5) + "/5";
+        }
+
+        function setMessage(text) {
+          messageEl.textContent = text;
+        }
+
+        function updatePlayer() {
+          playerEl.style.left = playerX + "%";
+          playerEl.style.top = playerY + "%";
+        }
+
+        function clearThreatElements() {
+          roomEl.querySelectorAll(".threat").forEach((el) => el.remove());
+        }
+
+        function renderThreats() {
+          clearThreatElements();
+
+          const positions = [
+            [15, 18],
+            [70, 20],
+            [75, 65],
+            [20, 70],
+          ];
+
+          threatsLeft.forEach((name, i) => {
+            const threat = document.createElement("button");
+            threat.className = "threat";
+            threat.textContent = name;
+            threat.style.left = positions[i % positions.length][0] + "%";
+            threat.style.top = positions[i % positions.length][1] + "%";
+            threat.setAttribute("aria-label", "Torju uhka " + name);
+            threat.addEventListener("click", () => defeatThreat(threat, name));
+            roomEl.appendChild(threat);
+          });
+        }
+
+        function loadRoom() {
+          if (roomIndex >= rooms.length) {
+            finishGame();
+            return;
+          }
+
+          answering = false;
+          gameOver = false;
+          questionArea.hidden = true;
+          finishArea.hidden = true;
+          attackBtn.disabled = false;
+          playerX = 45;
+          playerY = 65;
+          updatePlayer();
+
+          const room = rooms[roomIndex];
+          titleEl.textContent = room.title;
+          threatsLeft = [...room.threats];
+          renderThreats();
+          updateStats();
+          setMessage(
+            "Torju kaikki uhat! Voit klikata uhkaa tai painaa Torju uhka.",
+          );
+        }
+
+        function defeatThreat(element, name) {
+          if (answering || gameOver || !threatsLeft.includes(name)) return;
+
+          const index = threatsLeft.indexOf(name);
+          threatsLeft.splice(index, 1);
+          element.remove();
+          xp += 10;
+          updateStats();
+          setMessage("Hyvä! Torjuit uhan: " + name + ".");
+
+          if (threatsLeft.length === 0) {
+            showQuestion();
+          }
+        }
+
+        function attackNearest() {
+          if (answering || gameOver) return;
+
+          const threat = roomEl.querySelector(".threat");
+          if (threat) {
+            const name = threat.textContent;
+            defeatThreat(threat, name);
+          } else {
+            setMessage("Huone on jo puhdas. Vastaa tietovisaan!");
+          }
+        }
+
+        function showQuestion() {
+          answering = true;
+          attackBtn.disabled = true;
+          questionArea.hidden = false;
+
+          const room = rooms[roomIndex];
+          questionEl.textContent = room.question;
+          answersEl.replaceChildren();
+
+          room.answers.forEach((answer, index) => {
+            const button = document.createElement("button");
+            button.className = "answer";
+            button.textContent = answer;
+            button.addEventListener("click", () => answerQuestion(index));
+            answersEl.appendChild(button);
+          });
+
+          setMessage(
+            "Kaikki uhat on torjuttu. Vastaa kysymykseen päästäksesi eteenpäin.",
+          );
+        }
+
+        function answerQuestion(index) {
+          if (!answering) return;
+
+          answering = false;
+          const room = rooms[roomIndex];
+          const buttons = answersEl.querySelectorAll("button");
+
+          buttons.forEach((button, i) => {
+            button.disabled = true;
+            if (i === room.correct) button.classList.add("correct");
+            if (i === index && index !== room.correct)
+              button.classList.add("wrong");
+          });
+
+          if (index === room.correct) {
+            xp += 20;
+            setMessage("✅ Oikein! " + room.explanation);
+          } else {
+            setMessage("❌ Ei aivan. " + room.explanation);
+          }
+
+          updateStats();
+
+          const nextButton = document.createElement("button");
+          nextButton.textContent =
+            roomIndex === rooms.length - 1 ? "Näytä tulos" : "Seuraava huone ➜";
+          nextButton.addEventListener("click", () => {
+            roomIndex++;
+            loadRoom();
+          });
+          answersEl.appendChild(nextButton);
+        }
+
+        function move(direction) {
+          if (answering || gameOver) return;
+
+          const step = 5;
+          if (direction === "up") playerY = Math.max(2, playerY - step);
+          if (direction === "down") playerY = Math.min(82, playerY + step);
+          if (direction === "left") playerX = Math.max(2, playerX - step);
+          if (direction === "right") playerX = Math.min(88, playerX + step);
+
+          updatePlayer();
+        }
+
+        function finishGame() {
+          gameOver = true;
+          answering = false;
+          clearThreatElements();
+          questionArea.hidden = true;
+          finishArea.hidden = false;
+          attackBtn.disabled = true;
+          titleEl.textContent = "Seikkailu suoritettu!";
+          document.getElementById("finalScore").textContent =
+            "Lopulliset pisteet: " + xp + " XP";
+          setMessage("Olet suorittanut Cyber Questin!");
+          updateStats();
+        }
+
+        document.addEventListener("keydown", (event) => {
+          const key = event.key.toLowerCase();
+          const directions = {
+            arrowup: "up",
+            w: "up",
+            arrowdown: "down",
+            s: "down",
+            arrowleft: "left",
+            a: "left",
+            arrowright: "right",
+            d: "right",
+          };
+
+          if (directions[key]) {
+            event.preventDefault();
+            move(directions[key]);
+          }
+
+          if (key === " " || key === "enter") {
+            if (!questionArea.hidden || !finishArea.hidden) return;
+            attackNearest();
+          }
+        });
+
+        document.querySelectorAll("[data-move]").forEach((button) => {
+          button.addEventListener("click", () => move(button.dataset.move));
+        });
+
+        attackBtn.addEventListener("click", attackNearest);
+
+        function restart() {
+          roomIndex = 0;
+          xp = 0;
+          playerX = 45;
+          playerY = 65;
+          answering = false;
+          gameOver = false;
+          loadRoom();
+          setMessage("Uusi peli alkoi! Torju uhat ja testaa IT-tietosi.");
+        }
+
+        document
+          .getElementById("restartBtn")
+          .addEventListener("click", restart);
+        document
+          .getElementById("playAgainBtn")
+          .addEventListener("click", restart);
+
+        loadRoom();
+      })();
+    </script>
+  
+<!-- Vibe-pelit: yhteinen paluupainike ja käyttämättömyysohjaus -->
+<style id="vibe-navigation-style">
+  #vibe-back-to-games-wrap { width:100%; max-width:100%; box-sizing:border-box; display:flex; justify-content:center; align-items:center; margin:24px auto 30px; padding:0 16px; grid-column:1 / -1; flex-shrink:0; }
+  #vibe-back-to-games { display:inline-flex!important; align-items:center!important; justify-content:center!important; box-sizing:border-box!important; background:#44e5cc!important; color:#071627!important; border:2px solid #f2fffd!important; border-radius:999px!important; padding:16px 28px!important; font:800 18px/1.25 system-ui,Arial,sans-serif!important; text-decoration:none!important; box-shadow:0 5px 22px #0007!important; max-width:100%!important; min-height:56px!important; cursor:pointer!important; text-align:center!important; }
+  #vibe-back-to-games:hover,#vibe-back-to-games:focus-visible {background:#a5fff0!important;outline:3px solid #ffffff!important;outline-offset:2px!important;}
+  @media(max-width:420px){#vibe-back-to-games {font-size:17px!important;padding:15px 22px!important;}}
+</style>
+<div id="vibe-back-to-games-wrap"><a id="vibe-back-to-games" href="index.html" aria-label="Valitse toinen peli">Valitse toinen peli</a></div>
+<script id="vibe-idle-navigation">
+(function () {
+  'use strict';
+  const IDLE_AFTER_MS = 60 * 1000; // Muuta aikaa tästä (millisekuntia).
+  let lastActivity = Date.now();
+  let timeoutId;
+  function goToGames() { window.location.replace('index.html'); }
+  function resetIdleCountdown() {
+    lastActivity = Date.now();
+    window.clearTimeout(timeoutId);
+    timeoutId = window.setTimeout(goToGames, IDLE_AFTER_MS);
+  }
+  ['pointerdown', 'pointermove', 'keydown', 'touchstart', 'wheel'].forEach(function(type) {
+    document.addEventListener(type, resetIdleCountdown, {passive:true, capture:true});
+  });
+  // Tarkistetaan aika myös, kun selain palautuu taustalta.
+  document.addEventListener('visibilitychange', function() {
+    if (!document.hidden && Date.now() - lastActivity >= IDLE_AFTER_MS) goToGames();
+  });
+  resetIdleCountdown();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tietokoneen osien tunnistuspeli</title>
+<style>
+:root{--bg:#eef1f4;--ink:#14232e;--mute:#5b6b78;--card:#fff;--line:#d3dae0;--green:#0f7b5f;--amber:#f2a900;--red:#c8372d}
+@media (prefers-color-scheme:dark){:root{--bg:#101a21;--ink:#e8eef2;--mute:#9db0bd;--card:#18252e;--line:#2c3d49}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5}
+header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px;background:#14232e;color:#fff}
+header h1{margin:0;font-size:1.25rem}
+nav{display:flex;gap:6px}
+nav button{font:inherit;padding:8px 16px;border:0;border-radius:6px;background:transparent;color:#cfe0ea;cursor:pointer}
+nav button[aria-selected=true]{background:var(--green);color:#fff}
+nav button:focus-visible,.btn:focus-visible,.hs:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+main{max-width:1000px;margin:0 auto;padding:18px}
+.hud{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}
+.chip{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:6px 12px;font-weight:600}
+.task{font-size:1.2rem;font-weight:600;margin:0 0 10px}
+.stage{position:relative;width:100%;aspect-ratio:16/10;border-radius:8px;overflow:hidden;background:#27363f;border:1px solid var(--line)}
+.stage img,.stage svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.stage img{object-fit:fill}
+.hs{position:absolute;border:2px solid transparent;border-radius:4px;background:transparent;padding:0;cursor:pointer;transition:background .15s,border-color .15s}
+.hs:hover,.hs:focus-visible{background:rgba(242,169,0,.22);border-color:var(--amber)}
+.hs.ok{background:rgba(15,123,95,.35);border-color:#19c493}
+.hs.bad{background:rgba(200,55,45,.35);border-color:var(--red)}
+.ping{position:absolute;width:28px;height:28px;margin:-14px 0 0 -14px;border-radius:50%;border:3px solid var(--red);pointer-events:none;animation:ping .6s ease-out forwards}
+@keyframes ping{to{transform:scale(1.8);opacity:0}}
+@media (prefers-reduced-motion:reduce){.ping{animation:none}}
+.bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:12px}
+.btn{font:inherit;font-weight:600;padding:9px 18px;border:0;border-radius:6px;background:var(--green);color:#fff;cursor:pointer}
+.btn.alt{background:var(--amber);color:#14232e}
+.btn:disabled{opacity:.45;cursor:default}
+.fb{flex:1;min-width:220px;min-height:1.5em;font-weight:600}
+.fb.ok{color:var(--green)}.fb.bad{color:var(--red)}.fb.hint{color:var(--mute)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:16px;margin-top:12px}
+.panel h2{margin:0 0 6px;font-size:1.1rem}
+.big{font-size:2.4rem;font-weight:700;margin:4px 0}
+.tabs2{display:flex;gap:6px;margin-bottom:10px}
+.tabs2 button{font:inherit;padding:6px 14px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--ink);cursor:pointer}
+.tabs2 button[aria-pressed=true]{background:var(--ink);color:var(--bg)}
+.hidden{display:none}
+.coord{position:absolute;left:8px;bottom:8px;background:#000c;color:#fff;font:12px monospace;padding:4px 8px;border-radius:4px;pointer-events:none}
+</style>
+</head>
+<body>
+<header>
+  <h1>Tunnista tietokoneen osat</h1>
+  <nav role="tablist">
+    <button role="tab" id="tabPeli" aria-selected="true">Peli</button>
+    <button role="tab" id="tabKertaus" aria-selected="false">Tutkimustila</button>
+  </nav>
+</header>
+
+<main>
+  <!-- PELI -->
+  <section id="peli">
+    <div id="start" class="panel">
+      <h2>Valmis haasteeseen?</h2>
+      <p>Saat 8 tehtävää. Etsi kysytty osa kuvasta ja klikkaa sitä. Vihje maksaa pisteitä, ja jokainen väärä klikkaus vähentää pisteitä. Yksi tehtävä on harhautus!</p>
+      <button class="btn" id="startBtn">Aloita peli</button>
+    </div>
+
+    <div id="game" class="hidden">
+      <div class="hud">
+        <span class="chip" id="hudNum">1 / 8</span>
+        <span class="chip" id="hudScore">Pisteet: 0</span>
+        <span class="chip" id="hudTime">Aika: 0:00</span>
+      </div>
+      <p class="task" id="taskText"></p>
+      <div class="stage" id="stage"></div>
+      <div class="bar">
+        <button class="btn alt" id="hintBtn">Vihje (−3 p)</button>
+        <button class="btn" id="nextBtn" disabled>Seuraava</button>
+        <div class="fb" id="fb" aria-live="polite"></div>
+      </div>
+    </div>
+
+    <div id="end" class="panel hidden">
+      <h2>Peli ohi!</h2>
+      <div class="big" id="endScore"></div>
+      <p id="endInfo"></p>
+      <button class="btn" id="againBtn">Pelaa uudelleen</button>
+    </div>
+  </section>
+
+  <!-- TUTKIMUSTILA -->
+  <section id="kertaus" class="hidden">
+    <div class="tabs2" id="sceneTabs"></div>
+    <p class="task">Klikkaa osaa ja lue, mitä se tekee.</p>
+    <div class="stage" id="studyStage"></div>
+    <div class="panel" id="info"><h2>Valitse osa kuvasta</h2><p>Siirrä hiiri kuvan päälle, niin näet klikattavat alueet.</p></div>
+  </section>
+</main>
+
+<script>
+/* ============ ASETUKSET ============
+   Oikeat valokuvat: laita kuvatiedostot samaan kansioon kuin peli.html
+   ja kirjoita tiedostonimi kohtaan "kuva". Jos kuvaa ei löydy, peli
+   näyttää sisäänrakennetun piirroskuvan, joten se toimii heti.
+   Hotspotit: x, y, w, h ovat prosentteja kuvan koosta (0–100).
+   Löydät oikeat arvot avaamalla pelin osoitteella peli.html?kalibroi
+   ja klikkaamalla kuvaa: koordinaatit näkyvät kuvan alakulmassa. */
+const SCENES = {
+  poyta: {
+    nimi: "Työpöytä",
+    kuva: "tyopoyta.jpg",
+    svg: `<defs>
+<linearGradient id="wall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c3d2dd"/><stop offset="1" stop-color="#93a9b9"/></linearGradient>
+<linearGradient id="wood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cfa06a"/><stop offset="1" stop-color="#97693a"/></linearGradient>
+<linearGradient id="scr" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3b97e0"/><stop offset="1" stop-color="#1b3b78"/></linearGradient>
+<linearGradient id="pbody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f5f7f8"/><stop offset="1" stop-color="#c5ccd2"/></linearGradient>
+<linearGradient id="mouseg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fafafa"/><stop offset="1" stop-color="#bfc5cb"/></linearGradient>
+<filter id="blur"><feGaussianBlur stdDeviation="1.3"/></filter>
+</defs>
+<rect width="160" height="100" fill="url(#wall)"/>
+<rect x="6" y="7" width="13" height="17" rx="1" fill="#f4f1ea" stroke="#6f7d88" stroke-width=".8"/><rect x="8" y="9" width="9" height="13" fill="#e0a45a"/><path d="M8 22 L12 15 L14.5 19 L17 13 V22Z" fill="#7a5a3a"/>
+<rect y="46" width="160" height="54" fill="url(#wood)"/><rect y="46" width="160" height="1.4" fill="#e6c08c"/>
+<path d="M0 56 Q40 54 80 57 T160 56 M0 68 Q50 66 90 70 T160 68 M0 82 Q40 85 100 81 T160 84 M0 93 Q60 91 160 94" stroke="#8a5f33" stroke-width=".4" fill="none" opacity=".5"/>
+<ellipse cx="50" cy="52" rx="34" ry="3" fill="#000" opacity=".22" filter="url(#blur)"/>
+<ellipse cx="126" cy="46" rx="24" ry="2.5" fill="#000" opacity=".2" filter="url(#blur)"/>
+<path d="M8 49 L9.5 40 H16.5 L18 49Z" fill="#c4633f"/><rect x="8" y="39" width="10" height="2" fill="#a84f30"/>
+<ellipse cx="12" cy="33" rx="2.8" ry="6.5" fill="#3f9a56" transform="rotate(-25 12 38)"/><ellipse cx="13" cy="32" rx="2.6" ry="7" fill="#58b36d" transform="rotate(20 13 38)"/><ellipse cx="12.5" cy="31" rx="2.2" ry="7.5" fill="#2f8447"/>
+<path d="M94.5 46 C 93 38, 86 44, 80 36" stroke="#2a2f34" stroke-width=".9" fill="none"/>
+<rect x="46" y="39" width="8" height="9" fill="#9aa4ac"/><ellipse cx="50" cy="49" rx="14" ry="2.6" fill="#b4bdc4" stroke="#7f8a93" stroke-width=".5"/>
+<rect x="19" y="10" width="61" height="30" rx="2.2" fill="#18222c" stroke="#0b1116" stroke-width=".6"/>
+<rect x="21" y="12" width="57" height="24" fill="url(#scr)"/><circle cx="66" cy="21" r="7" fill="#fff" opacity=".12"/><path d="M21 36 L21 29 Q36 24 50 29 T78 26 V36Z" fill="#12306a" opacity=".55"/>
+<rect x="24" y="15" width="24" height="15" rx="1" fill="#eef3f8"/><rect x="24" y="15" width="24" height="3" rx="1" fill="#3a6db0"/><circle cx="26" cy="16.5" r=".6" fill="#fff"/><rect x="26" y="20" width="16" height="1.2" fill="#9db3c9"/><rect x="26" y="22.5" width="19" height="1.2" fill="#c3d1df"/><rect x="26" y="25" width="12" height="1.2" fill="#c3d1df"/>
+<rect x="52" y="17" width="22" height="11" rx="1" fill="#1d2b3a" opacity=".85"/><path d="M54 25 L58 21 L61 24 L65 19 L72 26" stroke="#4fe0b0" stroke-width=".8" fill="none"/>
+<rect x="21" y="33" width="57" height="3" fill="#0d1b30"/><rect x="22" y="34" width="3" height="1" fill="#4aa3ff"/><rect x="26" y="34" width="2" height="1" fill="#e0e8f0"/><rect x="29" y="34" width="2" height="1" fill="#e0e8f0"/>
+<circle cx="50" cy="38" r=".6" fill="#38d37a"/>
+<rect x="24" y="56" width="54" height="9" rx="1.2" fill="#dfe3e7" stroke="#9aa3ab" stroke-width=".4"/>
+<path d="M25.5 58.2 H76.5 M25.5 60.4 H76.5 M25.5 62.6 H76.5" stroke="#8d97a0" stroke-width="1.4" stroke-dasharray="2.6 .6" fill="none"/><rect x="38" y="63.4" width="22" height="1.2" fill="#8d97a0"/>
+<ellipse cx="94.5" cy="52" rx="5.2" ry="6" fill="url(#mouseg)" stroke="#7d8790" stroke-width=".5"/><path d="M89.5 51 H99.5 M94.5 46 V51" stroke="#8d97a0" stroke-width=".4" fill="none"/><rect x="93.8" y="47.4" width="1.4" height="3" rx=".7" fill="#5c6670"/>
+<rect x="112" y="18" width="29" height="12" fill="#fff" stroke="#b6bec5" stroke-width=".5"/><path d="M114 21 H132 M114 23.5 H136 M114 26 H128" stroke="#cdd5db" stroke-width=".5"/>
+<rect x="106" y="28" width="41" height="16" rx="2.2" fill="url(#pbody)" stroke="#8f99a2" stroke-width=".6"/><rect x="108" y="30" width="37" height="5" rx="1" fill="#dde2e6"/><rect x="112" y="37" width="29" height="2.4" rx="1" fill="#2b343b"/>
+<rect x="115" y="38.3" width="23" height="5.5" fill="#fff" stroke="#c0c8ce" stroke-width=".4"/><path d="M117 40.5 H131" stroke="#9db3c9" stroke-width=".5"/>
+<circle cx="143" cy="32.5" r="1" fill="#38d37a"/><rect x="109" y="31.5" width="10" height="2" rx=".6" fill="#2d6a8a"/>
+<ellipse cx="120" cy="66.6" rx="10" ry="2" fill="#000" opacity=".2"/><ellipse cx="120" cy="65.8" rx="9" ry="1.8" fill="#f3efe7" stroke="#cfc8b8" stroke-width=".4"/>
+<path d="M127 58.5 q5.5 0 3.6 3.6 q-1 2.1 -4 2.1" stroke="#c0553a" stroke-width="1.5" fill="none"/>
+<path d="M113 57 h14 v3.5 a7 5.5 0 0 1 -14 0 z" fill="#d06043"/><path d="M114.5 58 v3" stroke="#e98a6c" stroke-width="1" opacity=".7"/>
+<ellipse cx="120" cy="57" rx="7" ry="1.7" fill="#4a2a18" stroke="#efe3cf" stroke-width=".5"/>
+<path d="M117.5 55 q-1.5 -2 0 -4 M122 55 q-1.5 -2 0 -4" stroke="#fff" stroke-width=".7" opacity=".55" fill="none"/>`
+  },
+  sisus: {
+    nimi: "Tietokoneen sisus",
+    kuva: "sisus.jpg",
+    svg: `<defs>
+<linearGradient id="pcb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#238f68"/><stop offset="1" stop-color="#0e5640"/></linearGradient>
+<linearGradient id="fin" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#d8dee2"/><stop offset=".5" stop-color="#8d98a1"/><stop offset="1" stop-color="#d8dee2"/></linearGradient>
+<linearGradient id="gpug" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#39424b"/><stop offset="1" stop-color="#14181d"/></linearGradient>
+<linearGradient id="psug" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#525c66"/><stop offset="1" stop-color="#262c32"/></linearGradient>
+<linearGradient id="ramg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a24cff"/><stop offset="1" stop-color="#27d3ff"/></linearGradient>
+<pattern id="fins" width="1.8" height="4" patternUnits="userSpaceOnUse"><rect x="1.2" width=".6" height="4" fill="#5f6a74"/></pattern>
+<filter id="blur"><feGaussianBlur stdDeviation="2"/></filter>
+<g id="fan"><circle r="13" fill="#0d1115"/>
+<g fill="#3d4854"><ellipse cy="-7" rx="3.6" ry="6.5"/><ellipse cy="-7" rx="3.6" ry="6.5" transform="rotate(51)"/><ellipse cy="-7" rx="3.6" ry="6.5" transform="rotate(103)"/><ellipse cy="-7" rx="3.6" ry="6.5" transform="rotate(154)"/><ellipse cy="-7" rx="3.6" ry="6.5" transform="rotate(206)"/><ellipse cy="-7" rx="3.6" ry="6.5" transform="rotate(257)"/><ellipse cy="-7" rx="3.6" ry="6.5" transform="rotate(309)"/></g>
+<circle r="3.8" fill="#1e252d" stroke="#566370" stroke-width=".6"/></g>
+</defs>
+<rect width="160" height="100" fill="#10141a"/><rect x="2" y="2" width="156" height="96" rx="2" fill="#1b222b"/>
+<rect x="2" y="64" width="52" height="34" fill="#0f1317"/>
+<ellipse cx="96" cy="72" rx="46" ry="5" fill="#3fe0a8" opacity=".25" filter="url(#blur)"/>
+<rect x="10" y="8" width="32" height="32" rx="3" fill="#232b34" stroke="#0b0e12" stroke-width=".6"/><use href="#fan" transform="translate(26,24) scale(1.05)"/>
+<rect x="45" y="10" width="9" height="28" fill="#aeb6bd"/><rect x="46" y="12" width="5" height="4" fill="#3b7bd9"/><rect x="46" y="18" width="5" height="4" fill="#e05252"/><rect x="46" y="24" width="5" height="4" fill="#38c07a"/><rect x="46" y="30" width="5" height="4" fill="#e6c23a"/>
+<rect x="54" y="8" width="96.4" height="84" rx="1.5" fill="url(#pcb)" stroke="#0a3d2d" stroke-width=".6"/>
+<path d="M58 50 H90 V54 H130 M58 90 H100 V80 M140 48 V90 M104 50 V56 M136 10 V50 H146" stroke="#4fd1a0" stroke-width=".5" fill="none" opacity=".35"/>
+<g fill="#4fd1a0" opacity=".5"><circle cx="60" cy="52" r=".9"/><circle cx="140" cy="60" r=".9"/><circle cx="140" cy="76" r=".9"/><circle cx="64" cy="88" r=".9"/></g>
+<rect x="56" y="11" width="6" height="34" rx="1" fill="#2c353e"/><rect x="64" y="9.5" width="54" height="6" rx="1" fill="#2c353e"/><path d="M57 14 H61 M57 18 H61 M57 22 H61 M57 26 H61 M57 30 H61 M57 34 H61 M57 38 H61" stroke="#59646f" stroke-width=".5"/>
+<rect x="64" y="22" width="25.6" height="24" rx="1.5" fill="url(#fin)"/><rect x="64" y="22" width="25.6" height="24" rx="1.5" fill="url(#fins)"/>
+<circle cx="76.8" cy="34" r="10.8" fill="#0d1115" stroke="#222a32" stroke-width="1"/><use href="#fan" transform="translate(76.8,34) scale(.79)"/>
+<rect x="70" y="49" width="20" height="5" rx="1" fill="#3a444d"/><rect x="72" y="50" width="16" height="1" fill="#5d6a76"/>
+<rect x="93.5" y="16" width="14.5" height="32" rx=".8" fill="#0f1418"/>
+<rect x="95" y="17" width="4.2" height="30" rx=".6" fill="#2b333c"/><rect x="95.3" y="17" width="1" height="30" fill="url(#ramg)"/>
+<rect x="101.5" y="17" width="4.2" height="30" rx=".6" fill="#2b333c"/><rect x="101.8" y="17" width="1" height="30" fill="url(#ramg)"/>
+<rect x="109" y="17" width="3" height="30" fill="#0d1115"/><rect x="114" y="17" width="3" height="30" fill="#0d1115"/>
+<rect x="121" y="26" width="12" height="12" rx="1" fill="#2d363f"/><path d="M123 28 H131 M123 31 H131 M123 34 H131" stroke="#566370" stroke-width=".5"/>
+<rect x="143" y="17" width="5.5" height="27" rx=".6" fill="#ececec" stroke="#9aa3ab" stroke-width=".4"/>
+<path d="M51.2 84 C 96 99, 160 98, 145.7 43" stroke="#0b0e11" stroke-width="3.6" fill="none"/>
+<path d="M51.2 84 C 96 99, 160 98, 145.7 43" stroke="#e0b11a" stroke-width=".7" stroke-dasharray="2 1.4" fill="none"/>
+<rect x="57.6" y="57" width="76.8" height="14" rx="1.6" fill="url(#gpug)" stroke="#080b0e" stroke-width=".6"/>
+<path d="M59.5 58.4 H132.5" stroke="#3fe0a8" stroke-width=".7"/>
+<g><circle cx="72" cy="64.3" r="5.8" fill="#0d1115" stroke="#080b0e" stroke-width=".4"/><use href="#fan" transform="translate(72,64.3) scale(.43)"/>
+<circle cx="96" cy="64.3" r="5.8" fill="#0d1115" stroke="#080b0e" stroke-width=".4"/><use href="#fan" transform="translate(96,64.3) scale(.43)"/>
+<circle cx="120" cy="64.3" r="5.8" fill="#0d1115" stroke="#080b0e" stroke-width=".4"/><use href="#fan" transform="translate(120,64.3) scale(.43)"/></g>
+<rect x="54" y="56" width="3.6" height="16" fill="#b7bec4"/><rect x="124" y="55.4" width="8" height="2" fill="#111"/>
+<rect x="6.4" y="66" width="44.8" height="28" rx="2" fill="url(#psug)" stroke="#0b0e11" stroke-width=".7"/>
+<circle cx="22" cy="80" r="11.6" fill="#161b20"/><circle cx="22" cy="80" r="9.5" fill="none" stroke="#3b444d" stroke-width=".5"/><circle cx="22" cy="80" r="6.5" fill="none" stroke="#3b444d" stroke-width=".5"/>
+<use href="#fan" transform="translate(22,80) scale(.7)"/><path d="M10.4 80 H33.6 M22 68.4 V91.6" stroke="#3b444d" stroke-width=".5"/>
+<rect x="37" y="70" width="12" height="20" rx="1" fill="#151a1f"/><rect x="38.3" y="72" width="9.4" height="4.5" rx=".8" fill="#2fb67f"/><path d="M38.5 79 H47.5 M38.5 81.5 H47.5 M38.5 84 H44" stroke="#6f7c88" stroke-width=".7"/>
+<circle cx="9.5" cy="69" r=".9" fill="#aab3bb"/><circle cx="48" cy="91" r=".9" fill="#aab3bb"/>
+<polygon points="100,2 130,2 60,98 30,98" fill="#fff" opacity=".035"/>`
+  }
+};
+
+/* Osat: tehtävä, vihje ja selitys (tutkimustilaa varten) */
+const PARTS = [
+  {id:"naytto", scene:"poyta", nimi:"Näyttö", x:12,y:10,w:38,h:30,
+   tehtava:"Etsi tietokoneen näyttö.", vihje:"Se on tulostuslaite, jolla näet kuvan.",
+   info:"Näyttö on tulostuslaite (ulostulo). Se näyttää näytönohjaimelta tulevan kuvan. Tärkeitä ominaisuuksia ovat koko tuumina, tarkkuus (esim. 1920×1080) ja virkistystaajuus (Hz)."},
+  {id:"hiiri", scene:"poyta", nimi:"Hiiri", x:55.5,y:46,w:7,h:12,
+   tehtava:"Etsi hiiri.", vihje:"Pieni syöttölaite, jolla ohjataan osoitinta, näppäimistön oikealla puolella.",
+   info:"Hiiri on syöttölaite (sisääntulo). Sillä liikutetaan osoitinta ja klikataan. Hiiri voi olla langallinen tai langaton (Bluetooth/USB-vastaanotin)."},
+  {id:"tulostin", scene:"poyta", nimi:"Tulostin", x:66,y:18,w:26,h:26,
+   tehtava:"Etsi tulostin.", vihje:"Laite, josta tulee paperia ulos. Se on pöydän oikeassa reunassa.",
+   info:"Tulostin siirtää tiedoston paperille. Se on tulostuslaite. Mustesuihkutulostin ruiskuttaa mustetta ja lasertulostin käyttää värijauhetta."},
+  {id:"kahvi", scene:"poyta", nimi:"Kahvikuppi (harhautus)", x:69,y:55,w:12,h:12,
+   tehtava:"Harhautus! Klikkaa kuvasta esine, joka EI ole tietokoneen osa.", vihje:"Siitä juodaan lämmintä juomaa.",
+   info:"Kahvikuppi ei kuulu tietokoneeseen. Se on silti hyvä muistutus: nesteet ja elektroniikka eivät sovi yhteen, ja läikkynyt kahvi voi tuhota näppäimistön."},
+  {id:"jaahdytin", scene:"sisus", nimi:"Prosessorin jäähdytin", x:40,y:22,w:16,h:24,
+   tehtava:"Etsi prosessorin jäähdytyselementti ja tuuletin.", vihje:"Emolevyn yläosassa, metallinen siilimäinen osa ja pyörivä tuuletin.",
+   info:"Prosessori (CPU) on tietokoneen aivot ja kuumenee laskiessaan. Jäähdytyselementti johtaa lämmön pois ja tuuletin puhaltaa sen ilmaan. Ilman jäähdytystä prosessori ylikuumenisi."},
+  {id:"ram", scene:"sisus", nimi:"Muistikampa (RAM)", x:59,y:17,w:8,h:30,
+   tehtava:"Etsi käyttömuistia eli RAM-muistikampa.", vihje:"Ohuet pitkulaiset piirilevyt jäähdyttimen vieressä, usein pareittain.",
+   info:"RAM on käyttömuisti, johon tietokone tallentaa tilapäisesti sen, mitä juuri nyt tarvitaan. Se tyhjenee, kun virta katkeaa. Lisää muistia = enemmän ohjelmia auki yhtä aikaa."},
+  {id:"gpu", scene:"sisus", nimi:"Näytönohjain (GPU)", x:36,y:57,w:48,h:14,
+   tehtava:"Etsi näytönohjain.", vihje:"Leveä lisäkortti, jossa on yksi tai useampi tuuletin. Näyttökaapeli kytketään siihen.",
+   info:"Näytönohjain (GPU) piirtää kuvan näytölle. Se on tärkeä peleissä, 3D-grafiikassa ja videoeditoinnissa. Joissain koneissa grafiikka on prosessorin sisällä."},
+  {id:"psu", scene:"sisus", nimi:"Virtalähde (PSU)", x:4,y:66,w:28,h:28,
+   tehtava:"Etsi virtalähde.", vihje:"Kotelon alakulmassa oleva laatikko, josta lähtee paljon kaapeleita.",
+   info:"Virtalähde muuttaa seinäpistokkeen vaihtovirran tasavirraksi ja jakaa sen emolevylle, näytönohjaimelle ja levyille. Sen teho mitataan watteina (W)."}
+];
+
+const $ = id => document.getElementById(id);
+const CAL = location.search.includes("kalibroi");
+
+/* Rakentaa kuvan, hotspotit ja varakuvan */
+function buildStage(el, sceneKey, onClick){
+  const s = SCENES[sceneKey];
+  el.innerHTML = "";
+  const svg = document.createElementNS("http://www.w3.org/2000/svg","svg");
+  svg.setAttribute("viewBox","0 0 160 100"); svg.setAttribute("preserveAspectRatio","xMidYMid slice");
+  svg.innerHTML = s.svg; el.appendChild(svg);
+  const img = new Image(); img.alt = s.nimi; img.draggable = false;
+  img.onload = () => el.insertBefore(img, svg.nextSibling);
+  img.src = s.kuva;
+  PARTS.filter(p => p.scene === sceneKey).forEach(p => {
+    const b = document.createElement("button");
+    b.className = "hs"; b.dataset.id = p.id;
+    b.style.cssText = `left:${p.x}%;top:${p.y}%;width:${p.w}%;height:${p.h}%`;
+    b.setAttribute("aria-label", "Alue kuvassa");
+    b.onclick = e => onClick(p, b, e);
+    el.appendChild(b);
+  });
+  if (CAL){
+    const c = document.createElement("div"); c.className = "coord"; c.textContent = "Kalibrointi: klikkaa kuvaa";
+    el.appendChild(c);
+    el.addEventListener("click", e => {
+      const r = el.getBoundingClientRect();
+      c.textContent = `x: ${((e.clientX-r.left)/r.width*100).toFixed(1)}  y: ${((e.clientY-r.top)/r.height*100).toFixed(1)}`;
+    }, true);
+  }
+}
+
+/* ========== PELI ========== */
+let order, idx, score, wrong, hinted, solved, t0, timer, extraWrong;
+
+function shuffleKeepScenes(){
+  // pöytätehtävät ensin, sitten sisus; järjestys kussakin sekoitetaan
+  const sh = a => a.map(v=>[Math.random(),v]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]);
+  return [...sh(PARTS.filter(p=>p.scene==="poyta")), ...sh(PARTS.filter(p=>p.scene==="sisus"))];
+}
+function fmt(s){return Math.floor(s/60)+":"+String(s%60).padStart(2,"0")}
+
+function startGame(){
+  order = shuffleKeepScenes(); idx = 0; score = 0; extraWrong = 0;
+  $("start").classList.add("hidden"); $("end").classList.add("hidden"); $("game").classList.remove("hidden");
+  t0 = Date.now(); clearInterval(timer);
+  timer = setInterval(()=>{ $("hudTime").textContent = "Aika: " + fmt(Math.floor((Date.now()-t0)/1000)); }, 500);
+  showTask();
+}
+function showTask(){
+  const p = order[idx]; wrong = 0; hinted = false; solved = false;
+  $("hudNum").textContent = `${idx+1} / ${order.length}`;
+  $("hudScore").textContent = "Pisteet: " + score;
+  $("taskText").textContent = p.tehtava;
+  $("fb").textContent = ""; $("fb").className = "fb";
+  $("nextBtn").disabled = true; $("hintBtn").disabled = false;
+  $("nextBtn").textContent = idx === order.length-1 ? "Näytä tulos" : "Seuraava";
+  buildStage($("stage"), p.scene, (part, btn, e) => {
+    if (solved) return;
+    if (part.id === p.id){
+      solved = true;
+      const pts = Math.max(10 - 3*wrong - (hinted?3:0), 1);
+      score += pts;
+      btn.classList.add("ok");
+      $("fb").textContent = `Oikein! ${part.nimi}. +${pts} pistettä. ${part.info.split(". ")[0]}.`;
+      $("fb").className = "fb ok";
+      $("nextBtn").disabled = false; $("hintBtn").disabled = true;
+      $("hudScore").textContent = "Pisteet: " + score;
+      $("nextBtn").focus();
+    } else {
+      wrong++; extraWrong++;
+      btn.classList.add("bad");
+      const r = $("stage").getBoundingClientRect();
+      const ping = document.createElement("div"); ping.className = "ping";
+      ping.style.left = (e.clientX-r.left)+"px"; ping.style.top = (e.clientY-r.top)+"px";
+      $("stage").appendChild(ping); setTimeout(()=>ping.remove(), 600);
+      setTimeout(()=>btn.classList.remove("bad"), 900);
+      $("fb").textContent = `Ei ole. Tämä on: ${part.nimi}. Yritä uudelleen (−3 p).`;
+      $("fb").className = "fb bad";
+    }
+  });
+}
+function hint(){
+  hinted = true; $("hintBtn").disabled = true;
+  $("fb").textContent = "Vihje: " + order[idx].vihje; $("fb").className = "fb hint";
+}
+function next(){
+  if (idx < order.length-1){ idx++; showTask(); }
+  else endGame();
+}
+function endGame(){
+  clearInterval(timer);
+  const secs = Math.floor((Date.now()-t0)/1000), max = order.length*10;
+  $("game").classList.add("hidden"); $("end").classList.remove("hidden");
+  $("endScore").textContent = `${score} / ${max} pistettä`;
+  const arvio = score >= max*0.85 ? "Erinomaista! Olet tietokoneen osien asiantuntija." :
+                score >= max*0.6 ? "Hyvä tulos! Kertaa vielä tutkimustilassa osat, jotka tuottivat vaikeuksia." :
+                "Hyvä alku! Käy tutkimustilassa lukemassa osien tehtävät ja yritä uudelleen.";
+  $("endInfo").textContent = `Aika ${fmt(secs)}, vääriä klikkauksia ${extraWrong}. ${arvio}`;
+}
+
+/* ========== TUTKIMUSTILA ========== */
+let studyScene = "poyta";
+function showStudy(key){
+  studyScene = key;
+  $("sceneTabs").innerHTML = "";
+  Object.entries(SCENES).forEach(([k,s]) => {
+    const b = document.createElement("button");
+    b.textContent = s.nimi; b.setAttribute("aria-pressed", k===key);
+    b.onclick = () => showStudy(k);
+    $("sceneTabs").appendChild(b);
+  });
+  buildStage($("studyStage"), key, (p, btn) => {
+    document.querySelectorAll("#studyStage .hs").forEach(h=>h.classList.remove("ok"));
+    btn.classList.add("ok");
+    $("info").innerHTML = `<h2></h2><p></p>`;
+    $("info").querySelector("h2").textContent = p.nimi;
+    $("info").querySelector("p").textContent = p.info;
+  });
+}
+
+/* ========== VÄLILEHDET ========== */
+function tab(which){
+  const peli = which === "peli";
+  $("peli").classList.toggle("hidden", !peli); $("kertaus").classList.toggle("hidden", peli);
+  $("tabPeli").setAttribute("aria-selected", peli); $("tabKertaus").setAttribute("aria-selected", !peli);
+  if (!peli) showStudy(studyScene);
+}
+$("tabPeli").onclick = () => tab("peli");
+$("tabKertaus").onclick = () => tab("kertaus");
+$("startBtn").onclick = startGame; $("againBtn").onclick = startGame;
+$("hintBtn").onclick = hint; $("nextBtn").onclick = next;
+</script>
+
+<!-- Vibe-pelit: yhteinen paluupainike ja käyttämättömyysohjaus -->
+<style id="vibe-navigation-style">
+  #vibe-back-to-games-wrap { width:100%; max-width:100%; box-sizing:border-box; display:flex; justify-content:center; align-items:center; margin:24px auto 30px; padding:0 16px; grid-column:1 / -1; flex-shrink:0; }
+  #vibe-back-to-games { display:inline-flex!important; align-items:center!important; justify-content:center!important; box-sizing:border-box!important; background:#44e5cc!important; color:#071627!important; border:2px solid #f2fffd!important; border-radius:999px!important; padding:16px 28px!important; font:800 18px/1.25 system-ui,Arial,sans-serif!important; text-decoration:none!important; box-shadow:0 5px 22px #0007!important; max-width:100%!important; min-height:56px!important; cursor:pointer!important; text-align:center!important; }
+  #vibe-back-to-games:hover,#vibe-back-to-games:focus-visible {background:#a5fff0!important;outline:3px solid #ffffff!important;outline-offset:2px!important;}
+  @media(max-width:420px){#vibe-back-to-games {font-size:17px!important;padding:15px 22px!important;}}
+</style>
+<div id="vibe-back-to-games-wrap"><a id="vibe-back-to-games" href="index.html" aria-label="Valitse toinen peli">Valitse toinen peli</a></div>
+<script id="vibe-idle-navigation">
+(function () {
+  'use strict';
+  const IDLE_AFTER_MS = 60 * 1000; // Muuta aikaa tästä (millisekuntia).
+  let lastActivity = Date.now();
+  let timeoutId;
+  function goToGames() { window.location.replace('index.html'); }
+  function resetIdleCountdown() {
+    lastActivity = Date.now();
+    window.clearTimeout(timeoutId);
+    timeoutId = window.setTimeout(goToGames, IDLE_AFTER_MS);
+  }
+  ['pointerdown', 'pointermove', 'keydown', 'touchstart', 'wheel'].forEach(function(type) {
+    document.addEventListener(type, resetIdleCountdown, {passive:true, capture:true});
+  });
+  // Tarkistetaan aika myös, kun selain palautuu taustalta.
+  document.addEventListener('visibilitychange', function() {
+    if (!document.hidden && Date.now() - lastActivity >= IDLE_AFTER_MS) goToGames();
+  });
+  resetIdleCountdown();
+})();
+</script>
+</body>
+</html>

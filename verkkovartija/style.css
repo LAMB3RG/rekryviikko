@@ -1,0 +1,386 @@
+/* ---------- Värit ---------- */
+:root {
+  --tausta: #e8edf1;
+  --kortti: #ffffff;
+  --teksti: #1d2a33;
+  --himmea: #5b6b76;
+  --aito: #1b7a4b;
+  --huijaus: #c2410c;
+  --sininen: #1a56c4;
+  --reuna: #cfd8de;
+  --keltainen: #fff3c4;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--tausta);
+  color: var(--teksti);
+  font-family: "Segoe UI", system-ui, sans-serif;
+  display: flex;
+  justify-content: center;
+  padding: 24px 16px;
+}
+
+.peli { width: 100%; max-width: 560px; }
+
+/* Piilottaa elementin (käytetään näyttöjen ja nappien vaihtoon) */
+.piilossa { display: none; }
+
+/* Yläpalkki piiloon aloitusruudussa */
+body[data-naytto="naytto-aloitus"] .ylapalkki { display: none; }
+
+/* ---------- Yläpalkki ---------- */
+.ylapalkki {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  margin-bottom: 16px;
+  font-size: 0.95rem;
+}
+.mittari { min-width: 130px; }
+.palkki {
+  height: 10px;
+  background: var(--reuna);
+  border-radius: 5px;
+  margin-top: 4px;
+  overflow: hidden;
+}
+.taytto { height: 100%; width: 100%; transition: width 0.4s; }
+.taytto.turva { background: var(--aito); }
+.taytto.aika { background: var(--sininen); transition: width 1s linear; }
+.taytto.aika.kiire { background: var(--huijaus); }
+
+/* ---------- Aloitusruutu ---------- */
+h1 { font-size: 2.4rem; margin: 24px 0 8px; }
+.johdanto { font-size: 1.1rem; line-height: 1.5; }
+.ohjeet { padding-left: 20px; line-height: 1.6; margin: 20px 0 28px; }
+
+/* ---------- Viesti ---------- */
+.aaltorivi { margin: 0 0 8px; font-size: 0.85rem; color: var(--himmea); }
+
+.viesti {
+  background: var(--kortti);
+  border: 1px solid var(--reuna);
+  border-radius: 10px;
+  padding: 20px;
+  min-height: 210px;
+}
+.viesti-tyyppi { margin: 0 0 12px; font-size: 0.85rem; color: var(--himmea); }
+.lahettaja-rivi { margin: 0; font-size: 0.9rem; color: var(--himmea); }
+.paljasta { font-family: Consolas, monospace; color: var(--teksti); }
+.paljasta.paljastettu { background: var(--keltainen); padding: 0 4px; }
+.viesti h2 { margin: 6px 0 12px; font-size: 1.25rem; }
+.viesti-teksti { margin: 0; line-height: 1.5; }
+
+/* Klikattavat tutkittavat kohdat */
+.kohta {
+  font: inherit; color: var(--teksti);
+  cursor: pointer; background: none; border: none; padding: 0;
+  border-bottom: 2px dotted var(--himmea);
+}
+.kohta:hover { background: var(--keltainen); }
+.kohta.loydetty { background: var(--keltainen); border-bottom-style: solid; }
+
+.linkki {
+  display: inline-block; margin-top: 14px; padding: 0;
+  font: inherit; color: var(--sininen);
+  text-decoration: underline; cursor: pointer; background: none; border: none;
+}
+
+/* ---------- Työkalut ---------- */
+.tyokalut { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.tyokalu {
+  flex: 1; min-width: 140px;
+  padding: 8px 10px;
+  font: inherit; font-size: 0.85rem;
+  background: var(--kortti);
+  border: 1px solid var(--reuna);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.tyokalu:hover:not(:disabled) { border-color: var(--sininen); }
+.tyokalu:disabled { opacity: 0.45; cursor: default; }
+
+.tilarivi {
+  margin: 8px 0 0; padding: 6px 10px; min-height: 2em;
+  background: #f4f6f8; border: 1px solid var(--reuna); border-radius: 4px;
+  font-family: Consolas, monospace; font-size: 0.8rem; color: var(--himmea);
+}
+
+.loki { margin-top: 12px; }
+.loki h3 { margin: 0 0 6px; font-size: 0.95rem; color: var(--himmea); }
+.loki ul { margin: 0; padding-left: 18px; font-size: 0.9rem; line-height: 1.5; }
+.loki li.harha { color: var(--himmea); }
+
+/* ---------- Selitys ---------- */
+.selitys {
+  margin: 16px 0 0; padding: 12px 16px;
+  border-left: 5px solid var(--reuna);
+  background: var(--kortti); border-radius: 4px; line-height: 1.5;
+}
+.selitys.oikein { border-left-color: var(--aito); }
+.selitys.vaarin { border-left-color: var(--huijaus); }
+
+/* ---------- Napit ---------- */
+.napit { display: flex; gap: 12px; margin-top: 16px; }
+.nappi {
+  flex: 1; padding: 14px; font-size: 1.1rem; font-weight: 600;
+  color: white; border: none; border-radius: 8px; cursor: pointer;
+}
+.nappi:focus-visible, .tyokalu:focus-visible { outline: 3px solid var(--teksti); outline-offset: 2px; }
+.aito { background: var(--aito); }
+.huijaus { background: var(--huijaus); }
+.seuraava, .aloita { background: var(--teksti); }
+.aloita { width: 100%; }
+
+/* ---------- Välinäyttö ja loppuruutu ---------- */
+.huomio { padding: 10px 14px; background: var(--keltainen); border-radius: 6px; line-height: 1.5; }
+.huomio:empty { display: none; }
+.arvosana { font-size: 1.4rem; font-weight: 700; margin: 4px 0 12px; }
+#loppu-tilasto { line-height: 1.7; padding-left: 20px; }
+.suositus {
+  margin: 20px 0; padding: 16px;
+  background: var(--kortti); border: 1px solid var(--reuna);
+  border-left: 5px solid var(--sininen); border-radius: 6px;
+}
+.suositus h3 { margin: 0 0 6px; }
+.suositus p { margin: 0; line-height: 1.5; }
+
+/* ---------- Salasanapaja ---------- */
+.salasana-kentta {
+  width: 100%;
+  padding: 14px;
+  font-family: Consolas, monospace;
+  font-size: 1.2rem;
+  border: 2px solid var(--reuna);
+  border-radius: 8px;
+}
+.salasana-kentta:focus { outline: none; border-color: var(--sininen); }
+.murtorivi { margin: 14px 0 6px; font-size: 1.05rem; }
+.palkki.iso { height: 16px; border-radius: 8px; }
+.taytto.taso0 { background: #b91c1c; }
+.taytto.taso1 { background: #ea580c; }
+.taytto.taso2 { background: #ca8a04; }
+.taytto.taso3 { background: #65a30d; }
+.taytto.taso4 { background: var(--aito); }
+.vahvuus-teksti { margin: 6px 0 12px; font-weight: 600; min-height: 1.4em; }
+.vihjelista { list-style: none; padding: 0; margin: 0 0 20px; line-height: 1.8; }
+.vihjelista .ok { color: var(--aito); }
+.vihjelista .ei { color: var(--himmea); }
+
+/* ---------- Bugi koodissa ---------- */
+.koodi {
+  background: #1d2a33;
+  border-radius: 8px;
+  padding: 10px 0;
+  margin: 12px 0;
+  overflow-x: auto;
+}
+.koodirivi {
+  display: flex;
+  gap: 14px;
+  width: 100%;
+  padding: 6px 14px;
+  text-align: left;
+  font: inherit;
+  color: #e6edf2;
+  background: none;
+  border: none;
+  border-left: 4px solid transparent;
+  cursor: pointer;
+}
+.koodirivi:hover { background: #2b3b46; }
+.koodirivi code { font-family: Consolas, monospace; font-size: 0.95rem; white-space: pre; }
+.rivinro { color: #7b8d99; font-family: Consolas, monospace; min-width: 1.2em; text-align: right; }
+.koodirivi.oikea { background: #1d5a3a; border-left-color: #4ade80; }
+.koodirivi.vaara { background: #7a2e12; border-left-color: #fb923c; }
+
+/* ---------- Toimettomuuden varoitus ---------- */
+.varoitus {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  padding: 12px 16px;
+  text-align: center;
+  font-weight: 600;
+  background: var(--huijaus);
+  color: white;
+  z-index: 10;
+}
+.varoitus.piilossa { display: none; }
+
+
+/* ---------- Loppuhyökkäys: verkkokoneet ---------- */
+.verkko {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 16px 0;
+}
+.kone {
+  min-height: 78px;
+  padding: 10px 6px;
+  border: 2px solid var(--reuna);
+  border-radius: 8px;
+  background: var(--kortti);
+  color: var(--teksti);
+  font: inherit;
+  cursor: pointer;
+}
+.kone:hover:not(:disabled) { border-color: var(--sininen); }
+.kone .kone-kuva { display: block; font-size: 1.6rem; margin-bottom: 4px; }
+.kone.tartunta { border-color: var(--huijaus); background: #fff0e9; }
+.kone.eristetty { border-color: var(--aito); background: #e4f5eb; cursor: default; }
+.kone.vaarin-eristetty { border-color: var(--huijaus); background: #fff0e9; }
+.kone:disabled { opacity: 1; }
+@media (max-width: 380px) {
+  .verkko { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Loppuhyökkäyksen kysymyskohtaiset konekortit */
+.kone { display:flex; flex-direction:column; gap:8px; padding:10px; min-width:0; }
+.kone .kone-toiminto { border:0; background:transparent; color:inherit; cursor:pointer; font:inherit; }
+.kone .kone-toiminto:disabled { cursor:default; }
+.kone-tiedot { font-size:.82rem; padding:5px; cursor:pointer; }
+.kone-tehtava { display:none; font-size:.78rem; line-height:1.35; overflow-wrap:anywhere; margin:4px 0; }
+.kone-tehtava.nayta { display:block; }
+
+/* Loppuhyökkäyksen värit: saastunut eristämätön = punainen, oikein eristetty = vihreä, puhdas eristetty vahingossa = punainen. */
+.kone.tartunta { border-color: var(--huijaus); background: #fff0e9; }
+.kone.tartunta-eristetty { border-color: var(--aito); background: #e4f5eb; }
+.kone.puhdas-virheellisesti-eristetty { border-color: var(--huijaus); background: #fff0e9; }
+
+
+/* ---------- Visuaalinen uudistus: moderni kyberturvakeskus ---------- */
+:root {
+  --tausta: #0b1220;
+  --kortti: #121e30;
+  --teksti: #edf5ff;
+  --himmea: #9aacc4;
+  --aito: #25c995;
+  --huijaus: #ff6b6b;
+  --sininen: #6c9cff;
+  --reuna: #2b3b54;
+  --keltainen: #332b18;
+}
+body {
+  background:
+    radial-gradient(ellipse at 10% 0%, rgba(52, 95, 173, .22), transparent 38rem),
+    radial-gradient(ellipse at 100% 25%, rgba(25, 201, 149, .09), transparent 32rem),
+    var(--tausta);
+  color: var(--teksti);
+  padding: 28px 16px 40px;
+}
+.peli { max-width: 720px; }
+.ylapalkki {
+  position: sticky;
+  top: 10px;
+  z-index: 5;
+  padding: 14px 16px;
+  margin: 0 0 24px;
+  background: rgba(18, 30, 48, .94);
+  border: 1px solid var(--reuna);
+  border-radius: 14px;
+  box-shadow: 0 12px 32px rgba(0,0,0,.2);
+  backdrop-filter: blur(12px);
+}
+.mittari { flex: 1; min-width: 0; font-size: .88rem; font-weight: 650; }
+.palkki { background: #25344b; height: 8px; border-radius: 99px; }
+.taytto { border-radius: inherit; }
+h1 { font-size: clamp(2rem, 6vw, 3rem); letter-spacing: -.045em; line-height: 1.05; margin: 18px 0 14px; }
+h2, h3 { letter-spacing: -.02em; }
+.johdanto { color: #c8d7eb; }
+.ohjeet { color: #c8d7eb; }
+.viesti, .suositus, .selitys, .tilarivi {
+  background: linear-gradient(145deg, rgba(20, 34, 54, .98), rgba(15, 26, 43, .98));
+  border-color: var(--reuna);
+  border-radius: 14px;
+  box-shadow: 0 14px 34px rgba(0,0,0,.14);
+}
+.viesti { padding: 24px; }
+.viesti-tyyppi { color: #8db6ff; text-transform: uppercase; letter-spacing: .09em; font-weight: 750; }
+.lahettaja-rivi { color: var(--himmea); }
+.paljasta.paljastettu { color: #2b2100; background: #ffe08a; border-radius: 4px; }
+.kohta { color: #eaf2ff; border-bottom-color: #8ba6ce; }
+.kohta:hover, .kohta.loydetty { color: #fff; background: #3a3150; }
+.linkki { color: #8db6ff; }
+.tyokalu {
+  color: var(--teksti);
+  background: #17263c;
+  border-color: #344863;
+  border-radius: 9px;
+  padding: 10px 12px;
+  transition: transform .16s ease, border-color .16s ease, background .16s ease;
+}
+.tyokalu:hover:not(:disabled) { border-color: var(--sininen); background: #203653; transform: translateY(-1px); }
+.napit { gap: 10px; }
+.nappi {
+  border-radius: 11px;
+  padding: 14px 18px;
+  box-shadow: 0 6px 0 rgba(0,0,0,.18);
+  transition: transform .16s ease, filter .16s ease;
+}
+.nappi:hover { filter: brightness(1.08); transform: translateY(-2px); }
+.nappi:active { transform: translateY(1px); box-shadow: none; }
+.aito { background: linear-gradient(135deg, #18a879, #25c995); color: #061b16; }
+.huijaus { background: linear-gradient(135deg, #e94f63, #ff786b); color: #24090d; }
+.seuraava, .aloita { background: linear-gradient(135deg, #4d7fff, #7c72ff); color: white; }
+.aloita { min-height: 54px; }
+.huomio { background: #302918; border: 1px solid #69552b; color: #ffe4a3; border-radius: 10px; }
+.selitys { border-left-width: 4px; }
+.selitys.oikein { border-left-color: var(--aito); }
+.selitys.vaarin { border-left-color: var(--huijaus); }
+.suositus { border-left-color: var(--sininen); }
+.salasana-kentta {
+  color: var(--teksti); background: #0b1525; border-color: #344863;
+}
+.salasana-kentta::placeholder { color: #7f91ab; }
+.koodi { background: #08111f; border: 1px solid #2b3b54; border-radius: 12px; }
+.koodirivi { color: #dceaff; }
+.koodirivi:hover { background: #192b43; }
+.koodirivi.oikea { background: #123d35; border-left-color: #25c995; }
+.koodirivi.vaara { background: #4a2029; border-left-color: #ff6b6b; }
+.verkko { gap: 12px; }
+.kone {
+  min-height: 112px;
+  padding: 12px;
+  background: linear-gradient(150deg, #17263b, #111d30);
+  border: 1px solid #344863;
+  border-radius: 13px;
+  box-shadow: 0 7px 18px rgba(0,0,0,.12);
+  transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+}
+.kone:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(0,0,0,.2); }
+.kone .kone-toiminto { color: var(--teksti); }
+.kone .kone-kuva { font-size: 1.8rem; }
+.kone.tartunta { border-color: #ff6b6b; background: linear-gradient(145deg, #40232d, #261a29); }
+.kone.eristetty, .kone.tartunta-eristetty { border-color: #25c995; background: linear-gradient(145deg, #123d35, #112b30); }
+.kone.vaarin-eristetty, .kone.puhdas-virheellisesti-eristetty { border-color: #ff6b6b; background: linear-gradient(145deg, #40232d, #261a29); }
+.kone-tiedot {
+  color: #dceaff;
+  background: #203653;
+  border: 1px solid #3a5273;
+  border-radius: 7px;
+}
+.kone-tiedot:hover { background: #2b4568; }
+.kone-tehtava { color: #d3e0f2; }
+.varoitus { background: #c83e52; box-shadow: 0 8px 30px rgba(0,0,0,.3); }
+button:focus-visible, input:focus-visible {
+  outline: 3px solid #9dbbff !important;
+  outline-offset: 3px;
+}
+@media (max-width: 520px) {
+  body { padding: 12px 10px 28px; }
+  .ylapalkki { gap: 10px; padding: 11px; margin-bottom: 18px; }
+  .mittari { font-size: .78rem; }
+  .viesti { padding: 17px; }
+  .verkko { gap: 8px; }
+  .kone { padding: 8px 6px; min-height: 100px; }
+  .kone-tiedot { font-size: .76rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}

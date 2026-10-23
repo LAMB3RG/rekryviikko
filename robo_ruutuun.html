@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="fi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RoboRuutu Pro</title>
+    <style>
+      :root {
+        --bg-color: #0f172a;
+        --card-bg: #1e293b;
+        --accent-green: #10b981;
+        --accent-blue: #3b82f6;
+        --accent-red: #ef4444;
+        --accent-yellow: #f59e0b;
+        --text-light: #f8fafc;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-light);
+        margin: 0;
+        padding: 15px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        box-sizing: border-box;
+      }
+
+      .game-container {
+        background-color: var(--card-bg);
+        border-radius: 16px;
+        padding: 20px;
+        max-width: 480px;
+        width: 100%;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        border: 1px solid #334155;
+        text-align: center;
+      }
+
+      h1 {
+        margin: 0 0 5px 0;
+        font-size: 1.4rem;
+        color: var(--accent-green);
+      }
+
+      .info-bar {
+        font-size: 0.9rem;
+        color: #94a3b8;
+        margin-bottom: 10px;
+        font-weight: 500;
+      }
+
+      .demo-badge {
+        display: none;
+        background-color: var(--accent-yellow);
+        color: #000;
+        font-weight: bold;
+        font-size: 0.8rem;
+        padding: 4px 10px;
+        border-radius: 12px;
+        margin-bottom: 10px;
+      }
+
+      /* PELIKENTTÄ */
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 6px;
+        background-color: #0f172a;
+        padding: 10px;
+        border-radius: 12px;
+        margin: 0 auto 12px auto;
+        max-width: 280px;
+      }
+
+      .cell {
+        aspect-ratio: 1;
+        background-color: #334155;
+        border-radius: 8px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 1.1rem;
+        font-weight: bold;
+      }
+
+      .cell.robot {
+        background-color: var(--accent-blue);
+        border: 2px solid #60a5fa;
+      }
+      .cell.goal {
+        background-color: var(--accent-green);
+      }
+      .cell.wall {
+        background-color: #475569;
+      }
+
+      .controls {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin-bottom: 10px;
+        flex-wrap: wrap;
+      }
+
+      .btn-cmd {
+        background-color: #334155;
+        color: var(--text-light);
+        border: 1px solid #475569;
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        cursor: pointer;
+        font-weight: bold;
+      }
+
+      .btn-cmd:hover {
+        background-color: #475569;
+      }
+
+      .program-box {
+        background-color: #0f172a;
+        padding: 8px;
+        border-radius: 8px;
+        min-height: 38px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-bottom: 12px;
+        border: 1px dashed #475569;
+      }
+
+      .cmd-tag {
+        background-color: var(--accent-blue);
+        color: #fff;
+        padding: 3px 6px;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: bold;
+      }
+
+      .action-btns {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 15px;
+      }
+
+      .btn-run {
+        flex: 2;
+        background-color: var(--accent-green);
+        color: #000;
+        border: none;
+        padding: 10px;
+        border-radius: 8px;
+        font-weight: bold;
+        font-size: 0.95rem;
+        cursor: pointer;
+      }
+
+      .btn-reset {
+        flex: 1;
+        background-color: #475569;
+        color: #fff;
+        border: none;
+        padding: 10px;
+        border-radius: 8px;
+        font-weight: bold;
+        font-size: 0.85rem;
+        cursor: pointer;
+      }
+
+      .btn-restart-game {
+        flex: 1;
+        background-color: var(--accent-red);
+        color: #fff;
+        border: none;
+        padding: 10px;
+        border-radius: 8px;
+        font-weight: bold;
+        font-size: 0.85rem;
+        cursor: pointer;
+      }
+
+      .msg-box {
+        padding: 8px;
+        border-radius: 8px;
+        font-weight: bold;
+        display: none;
+        font-size: 0.85rem;
+        margin-bottom: 15px;
+      }
+
+      /* TULEVAT TASOT (PREVIEW) */
+      .previews-title {
+        font-size: 0.8rem;
+        color: #94a3b8;
+        margin-bottom: 6px;
+        text-transform: uppercase;
+      }
+
+      .previews-container {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+      }
+
+      .mini-level {
+        background-color: #0f172a;
+        padding: 4px;
+        border-radius: 6px;
+        border: 1px solid #334155;
+        opacity: 0.5;
+      }
+
+      .mini-level.active {
+        border-color: var(--accent-green);
+        opacity: 1;
+      }
+
+      .mini-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 2px;
+        width: 45px;
+        height: 45px;
+      }
+
+      .mini-cell {
+        background-color: #334155;
+        border-radius: 2px;
+      }
+      .mini-cell.r {
+        background-color: var(--accent-blue);
+      }
+      .mini-cell.g {
+        background-color: var(--accent-green);
+      }
+      .mini-cell.w {
+        background-color: #475569;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="game-container" onclick="userInteracted()">
+      <h1>🤖 RoboRuutu Pro</h1>
+      <div class="info-bar" id="level-title">Taso 1/5: Suora reitti!</div>
+      <div class="demo-badge" id="demo-badge">
+        ▶️ DEMOTILA (Klikkaa lopettaaksesi)
+      </div>
+
+      <div class="grid" id="grid"></div>
+
+      <div style="font-size: 0.8rem; margin-bottom: 6px; color: #94a3b8">
+        Ryömintäsuunta näkyy robotin nuolessa (⬆️➡️⬇️⬅️)
+      </div>
+      <div class="controls">
+        <button class="btn-cmd" onclick="addCmd('⬆️ Eteen')">⬆️ Eteen</button>
+        <button class="btn-cmd" onclick="addCmd('↪️ Oikea')">↪️ Oikea</button>
+        <button class="btn-cmd" onclick="addCmd('↩️ Vasen')">↩️ Vasen</button>
+      </div>
+
+      <div class="program-box" id="program-box">
+        <span style="color: #64748b; font-size: 0.8rem" id="empty-hint"
+          >Komennot ilmestyvät tähän...</span
+        >
+      </div>
+
+      <div class="action-btns">
+        <button class="btn-run" onclick="runProgram()">▶️ SUORITA</button>
+        <button class="btn-reset" onclick="resetLevel()">Tyhjennä</button>
+        <button class="btn-restart-game" onclick="restartWholeGame()">
+          🔄 Aloita alusta
+        </button>
+      </div>
+
+      <div class="msg-box" id="msg-box"></div>
+
+      <div class="previews-title">KENTÄT:</div>
+      <div class="previews-container" id="previews-container"></div>
+      <div id="vibe-back-to-games-wrap"><a id="vibe-back-to-games" href="index.html" aria-label="Valitse toinen peli">Valitse toinen peli</a></div>
+    </div>
+
+    <script>
+      const dirArrows = ["⬆️", "➡️", "⬇️", "⬅️"];
+      const dr = [-1, 0, 1, 0];
+      const dc = [0, 1, 0, -1];
+
+      const levels = [
+        {
+          grid: [
+            [".", ".", ".", ".", "G"],
+            [".", "W", "W", "W", "."],
+            [".", ".", ".", ".", "."],
+            [".", "W", "W", "W", "."],
+            ["R", ".", ".", ".", "."],
+          ],
+          startDir: 1,
+          title: "Taso 1/5: Suora reitti!",
+        },
+        {
+          grid: [
+            ["R", "W", ".", ".", "G"],
+            [".", "W", ".", "W", "."],
+            [".", ".", ".", "W", "."],
+            ["W", "W", ".", ".", "."],
+            [".", ".", ".", "W", "."],
+          ],
+          startDir: 2,
+          title: "Taso 2/5: Katukujat!",
+        },
+        {
+          grid: [
+            [".", ".", ".", ".", "."],
+            [".", "W", "W", "W", "."],
+            ["R", "W", "G", "W", "."],
+            [".", "W", ".", ".", "."],
+            [".", ".", ".", "W", "."],
+          ],
+          startDir: 0,
+          title: "Taso 3/5: U-Käännös!",
+        },
+        {
+          grid: [
+            ["G", "W", ".", ".", "."],
+            [".", "W", ".", "W", "."],
+            [".", "W", ".", "W", "."],
+            [".", "W", ".", "W", "."],
+            [".", ".", ".", "W", "R"],
+          ],
+          startDir: 3,
+          title: "Taso 4/5: Sik-Sak Slalom!",
+        },
+        {
+          grid: [
+            ["R", ".", "W", ".", "G"],
+            ["W", ".", "W", ".", "W"],
+            [".", ".", ".", ".", "."],
+            ["W", ".", "W", ".", "W"],
+            [".", ".", "W", ".", "."],
+          ],
+          startDir: 1,
+          title: "Taso 5/5: Mestarilabyrintti!",
+        },
+      ];
+
+      let currentLevel = 0;
+      let commands = [];
+      let isRunning = false;
+      let isDemoMode = false;
+      let demoTimer = null;
+
+      let robotR = 0,
+        robotC = 0,
+        robotDir = 0;
+
+      function initLevel() {
+        commands = [];
+        isRunning = false;
+        document.getElementById("msg-box").style.display = "none";
+        updateProgramBox();
+
+        const lvl = levels[currentLevel];
+        document.getElementById("level-title").innerText = lvl.title;
+
+        for (let r = 0; r < 5; r++) {
+          for (let c = 0; c < 5; c++) {
+            if (lvl.grid[r][c] === "R") {
+              robotR = r;
+              robotC = c;
+            }
+          }
+        }
+        robotDir = lvl.startDir;
+        drawGrid();
+        renderPreviews();
+      }
+
+      function drawGrid() {
+        const gridEl = document.getElementById("grid");
+        gridEl.innerHTML = "";
+        const lvl = levels[currentLevel];
+
+        for (let r = 0; r < 5; r++) {
+          for (let c = 0; c < 5; c++) {
+            const cell = document.createElement("div");
+            cell.className = "cell";
+
+            if (r === robotR && c === robotC) {
+              cell.className += " robot";
+              cell.innerText = `🤖${dirArrows[robotDir]}`;
+            } else if (lvl.grid[r][c] === "G") {
+              cell.className += " goal";
+              cell.innerText = "🚩";
+            } else if (lvl.grid[r][c] === "W") {
+              cell.className += " wall";
+              cell.innerText = "🧱";
+            }
+
+            gridEl.appendChild(cell);
+          }
+        }
+      }
+
+      function renderPreviews() {
+        const container = document.getElementById("previews-container");
+        container.innerHTML = "";
+
+        levels.forEach((lvl, idx) => {
+          const wrapper = document.createElement("div");
+          wrapper.className = `mini-level ${
+            idx === currentLevel ? "active" : ""
+          }`;
+
+          const miniGrid = document.createElement("div");
+          miniGrid.className = "mini-grid";
+
+          for (let r = 0; r < 5; r++) {
+            for (let c = 0; c < 5; c++) {
+              const miniCell = document.createElement("div");
+              miniCell.className = "mini-cell";
+              const val = lvl.grid[r][c];
+              if (val === "R") miniCell.className += " r";
+              if (val === "G") miniCell.className += " g";
+              if (val === "W") miniCell.className += " w";
+              miniGrid.appendChild(miniCell);
+            }
+          }
+
+          wrapper.appendChild(miniGrid);
+          container.appendChild(wrapper);
+        });
+      }
+
+      function addCmd(cmd) {
+        if (isRunning) return;
+        commands.push(cmd);
+        updateProgramBox();
+      }
+
+      function updateProgramBox() {
+        const box = document.getElementById("program-box");
+        if (commands.length === 0) {
+          box.innerHTML =
+            '<span style="color: #64748b; font-size: 0.8rem;">Komennot ilmestyvät tähän...</span>';
+        } else {
+          box.innerHTML = "";
+          commands.forEach((c) => {
+            const tag = document.createElement("span");
+            tag.className = "cmd-tag";
+            tag.innerText = c;
+            box.appendChild(tag);
+          });
+        }
+      }
+
+      function resetLevel() {
+        initLevel();
+      }
+
+      function restartWholeGame() {
+        currentLevel = 0;
+        initLevel();
+      }
+
+      async function runProgram() {
+        if (isRunning || commands.length === 0) return;
+        isRunning = true;
+
+        const lvl = levels[currentLevel];
+
+        for (let cmd of commands) {
+          await new Promise((r) => setTimeout(r, 400));
+
+          if (cmd === "⬆️ Eteen") {
+            let nextR = robotR + dr[robotDir];
+            let nextC = robotC + dc[robotDir];
+
+            if (
+              nextR < 0 ||
+              nextR >= 5 ||
+              nextC < 0 ||
+              nextC >= 5 ||
+              lvl.grid[nextR][nextC] === "W"
+            ) {
+              showMsg("💥 TÖRMÄYS! Robotti osui seinään.", "var(--accent-red)");
+              isRunning = false;
+              resetDemoTimer();
+              return;
+            } else {
+              robotR = nextR;
+              robotC = nextC;
+            }
+          } else if (cmd === "↪️ Oikea") {
+            robotDir = (robotDir + 1) % 4;
+          } else if (cmd === "↩️ Vasen") {
+            robotDir = (robotDir + 3) % 4;
+          }
+
+          drawGrid();
+
+          if (lvl.grid[robotR][robotC] === "G") {
+            showMsg(
+              "🎉 MAHTAVAA! Robotti pääsi maaliin!",
+              "var(--accent-green)"
+            );
+            setTimeout(() => {
+              if (currentLevel < levels.length - 1) {
+                currentLevel++;
+                initLevel();
+              } else {
+                showMsg(
+                  "🏆 ONNEA! Läpäisit kaikki tasot!",
+                  "var(--accent-green)"
+                );
+              }
+              isRunning = false;
+              resetDemoTimer();
+            }, 1200);
+            return;
+          }
+        }
+
+        showMsg(
+          "❌ Koodi päättyi, mutta robotti ei päässyt maaliin.",
+          "var(--accent-yellow)"
+        );
+        isRunning = false;
+        resetDemoTimer();
+      }
+
+      function showMsg(text, color) {
+        const msg = document.getElementById("msg-box");
+        msg.innerText = text;
+        msg.style.backgroundColor = color;
+        msg.style.color = "#000";
+        msg.style.display = "block";
+      }
+
+      function startDemo() {
+        if (isRunning) return;
+        isDemoMode = true;
+        document.getElementById("demo-badge").style.display = "inline-block";
+        restartWholeGame();
+
+        setTimeout(() => {
+          if (isDemoMode) addCmd("⬆️ Eteen");
+        }, 600);
+        setTimeout(() => {
+          if (isDemoMode) addCmd("⬆️ Eteen");
+        }, 1200);
+        setTimeout(() => {
+          if (isDemoMode) runProgram();
+        }, 1800);
+      }
+
+      function userInteracted() {
+        if (isDemoMode) {
+          isDemoMode = false;
+          document.getElementById("demo-badge").style.display = "none";
+          restartWholeGame();
+        }
+        resetDemoTimer();
+      }
+
+      function resetDemoTimer() {
+        clearTimeout(demoTimer);
+        // 3 minuuttia = 3 * 60 * 1000 millisekuntia = 180000 ms
+        // (Huom. Jos haluat testatessa nopeammin, voit vaihtaa tähän esim 10000 ms)
+        demoTimer = setTimeout(() => window.location.replace("index.html"), 60000);
+      }
+
+      // Käynnistys
+      initLevel();
+      resetDemoTimer();
+    </script>
+  
+<!-- Vibe-pelit: yhteinen paluupainike ja käyttämättömyysohjaus -->
+<style id="vibe-navigation-style">
+  #vibe-back-to-games-wrap { width:100%; max-width:100%; box-sizing:border-box; display:flex; justify-content:center; align-items:center; margin:24px auto 30px; padding:0 16px; grid-column:1 / -1; flex-shrink:0; }
+  #vibe-back-to-games { display:inline-flex!important; align-items:center!important; justify-content:center!important; box-sizing:border-box!important; background:#44e5cc!important; color:#071627!important; border:2px solid #f2fffd!important; border-radius:999px!important; padding:16px 28px!important; font:800 18px/1.25 system-ui,Arial,sans-serif!important; text-decoration:none!important; box-shadow:0 5px 22px #0007!important; max-width:100%!important; min-height:56px!important; cursor:pointer!important; text-align:center!important; }
+  #vibe-back-to-games:hover,#vibe-back-to-games:focus-visible {background:#a5fff0!important;outline:3px solid #ffffff!important;outline-offset:2px!important;}
+  @media(max-width:420px){#vibe-back-to-games {font-size:17px!important;padding:15px 22px!important;}}
+</style>
+
+<script id="vibe-idle-navigation">
+(function () {
+  'use strict';
+  const IDLE_AFTER_MS = 60 * 1000; // Muuta aikaa tästä (millisekuntia).
+  let lastActivity = Date.now();
+  let timeoutId;
+  function goToGames() { window.location.replace('index.html'); }
+  function resetIdleCountdown() {
+    lastActivity = Date.now();
+    window.clearTimeout(timeoutId);
+    timeoutId = window.setTimeout(goToGames, IDLE_AFTER_MS);
+  }
+  ['pointerdown', 'pointermove', 'keydown', 'touchstart', 'wheel'].forEach(function(type) {
+    document.addEventListener(type, resetIdleCountdown, {passive:true, capture:true});
+  });
+  // Tarkistetaan aika myös, kun selain palautuu taustalta.
+  document.addEventListener('visibilitychange', function() {
+    if (!document.hidden && Date.now() - lastActivity >= IDLE_AFTER_MS) goToGames();
+  });
+  resetIdleCountdown();
+})();
+</script>
+</body>
+</html>

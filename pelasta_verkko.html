@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IT-pikapeli: Pelasta verkko!</title>
+<style>
+:root{--bg:#07111f;--panel:#101f33;--line:#25415e;--cyan:#4de1d2;--yellow:#ffd166;--text:#edf6ff;--muted:#a8bfd4;--red:#ff7272;--green:#69e6a6}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at top,#14304b,#07111f 65%);color:var(--text);font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;display:grid;place-items:center;padding:20px}
+main{width:min(760px,100%);background:rgba(16,31,51,.96);border:1px solid var(--line);border-radius:22px;padding:clamp(20px,4vw,36px);box-shadow:0 24px 80px #0006}
+.kicker{color:var(--cyan);font-weight:800;letter-spacing:.12em;text-transform:uppercase;font-size:.8rem}
+h1{font-size:clamp(2rem,5vw,3.2rem);line-height:1.05;margin:.5rem 0 1rem}p{color:var(--muted)}.stats{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}.pill{border:1px solid var(--line);padding:7px 12px;border-radius:999px;color:var(--muted)}.pill strong{color:var(--text)}
+.progress{height:8px;background:#21344a;border-radius:99px;overflow:hidden;margin:18px 0 24px}.bar{height:100%;width:0;background:linear-gradient(90deg,var(--cyan),#77a9ff);transition:width .25s}
+.question{font-size:1.25rem;color:var(--text);font-weight:750;margin:8px 0 18px}.answers{display:grid;gap:10px}.answer{width:100%;text-align:left;background:#132940;color:var(--text);border:1px solid #31506d;border-radius:12px;padding:14px 16px;font:inherit;cursor:pointer;transition:.15s}.answer:hover:not(:disabled){border-color:var(--cyan);transform:translateY(-1px)}.answer:disabled{cursor:default}.answer.correct{border-color:var(--green);background:#123a34}.answer.wrong{border-color:var(--red);background:#41232e}.feedback{min-height:54px;margin:16px 0;color:var(--muted)}.feedback strong{color:var(--text)}button.primary{background:var(--cyan);color:#07111f;border:0;border-radius:12px;padding:12px 18px;font-weight:850;font-size:1rem;cursor:pointer}.primary:focus,.answer:focus{outline:3px solid #fff8;outline-offset:2px}.hidden{display:none}.end-score{font-size:3rem;font-weight:900;color:var(--cyan);margin:8px 0}.footer{font-size:.82rem;color:#7f9ab4;margin-top:24px}
+</style>
+</head>
+<body>
+<main>
+  <div class="kicker">⚡ IT-alan minipeli · noin 3–5 min</div>
+  <h1>Pelasta verkko!</h1>
+  <p>Toimistoverkossa on ongelmia. Vastaa 8 IT-kysymykseen ja kerää pisteitä, jotta saat järjestelmän takaisin toimintaan.</p>
+  <div class="stats"><div class="pill">Kysymys <strong id="counter">0/8</strong></div><div class="pill">Pisteet <strong id="score">0</strong></div><div class="pill">Aika <strong>3–5 min</strong></div></div>
+  <div class="progress"><div class="bar" id="bar"></div></div>
+  <section id="game">
+    <div class="question" id="question">Valmis aloittamaan?</div>
+    <div class="answers" id="answers"></div>
+    <div class="feedback" id="feedback">Valitse oikea vastaus. Jokainen oikea vastaus tuo 100 pistettä.</div>
+    <button class="primary" id="start">Aloita peli</button>
+    <button class="primary hidden" id="next">Seuraava kysymys →</button>
+  </section>
+  <section id="results" class="hidden">
+    <div class="kicker">Tehtävä suoritettu</div>
+    <h2>Verkko on taas toiminnassa!</h2>
+    <div class="end-score" id="finalScore">0 / 800</div>
+    <p id="resultText"></p>
+    <button class="primary" id="restart">Pelaa uudelleen</button>
+  </section>
+  <div class="footer">Vinkki: mieti, miten toimisit oikeassa IT-tukitilanteessa.</div>
+</main>
+<script>
+const qs=[
+ {q:"Tietokone ei saa yhteyttä internetiin. Mitä kannattaa tarkistaa ensin?",a:["Poista kaikki tiedostot","Tarkista Wi-Fi tai verkkokaapeli","Vaihda näytön taustakuva"],c:1,e:"Yhteys kannattaa ensin tarkistaa: Wi-Fi voi olla pois päältä tai kaapeli irti."},
+ {q:"Mikä on vahva salasana?",a:["12345678","omaetunimi","Pitkä, yksilöllinen salasana, jossa on eri merkkejä"],c:2,e:"Pitkä ja jokaisessa palvelussa eri salasana parantaa turvallisuutta. Salasananhallinta auttaa."},
+ {q:"Saat sähköpostin, jossa pyydetään kiireesti kirjautumaan tuntemattomasta linkistä. Mitä teet?",a:["En avaa linkkiä, vaan tarkistan lähettäjän ja palvelun virallisen osoitteen","Klikkaan heti","Lähetän salasanani vastauksena"],c:0,e:"Viesti voi olla tietojenkalastelua. Tarkista lähettäjä ja siirry palveluun itse virallisen sivun kautta."},
+ {q:"Mikä laite jakaa verkkoyhteyttä kodin tai toimiston laitteille?",a:["Tulostin","Reititin","Mikrofoni"],c:1,e:"Reititin ohjaa liikennettä verkon ja internetin välillä."},
+ {q:"Miksi ohjelmistopäivitykset ovat tärkeitä?",a:["Ne vain muuttavat kuvakkeita","Ne poistavat aina kaikki tiedostot","Ne korjaavat virheitä ja tietoturva-aukkoja"],c:2,e:"Päivitykset voivat korjata haavoittuvuuksia ja parantaa toimintaa."},
+ {q:"Työkaveri ei pääse kirjautumaan. Mikä on hyvä ensimmäinen tukikysymys?",a:["Mikä virheilmoitus näkyy ja milloin ongelma alkoi?","Miksi et osaa käyttää konetta?","Voitko ostaa uuden tietokoneen heti?"],c:0,e:"Tarkat kysymykset auttavat rajaamaan ongelmaa ilman turhia muutoksia."},
+ {q:"Mihin USB-hubia käytetään?",a:["Internetin nopeuden mittaamiseen","Useamman USB-laitteen liittämiseen yhteen USB-porttiin","Tietokoneen jäähdyttämiseen"],c:1,e:"USB-hub lisää käytettävissä olevien USB-porttien määrää."},
+ {q:"Mitä kannattaa tehdä tärkeistä tiedostoista?",a:["Tallentaa ainoa kopio työpöydälle","Poistaa ne joka viikko","Tehdä varmuuskopiot turvalliseen paikkaan"],c:2,e:"Varmuuskopiot auttavat palauttamaan tiedot esimerkiksi laitteen rikkoutuessa."}
+];
+let idx=0,score=0,locked=false;
+const $=id=>document.getElementById(id);
+function start(){idx=0;score=0;locked=false;$("score").textContent=score;$("results").classList.add("hidden");$("game").classList.remove("hidden");$("start").classList.add("hidden");$("next").classList.add("hidden");render()}
+function render(){locked=false;const x=qs[idx];$("counter").textContent=`${idx+1}/${qs.length}`;$("bar").style.width=`${idx/qs.length*100}%`;$("question").textContent=x.q;$("feedback").textContent="Valitse paras vastaus.";const box=$("answers");box.innerHTML="";x.a.forEach((a,i)=>{const b=document.createElement("button");b.className="answer";b.textContent=String.fromCharCode(65+i)+". "+a;b.onclick=()=>choose(i,b);box.appendChild(b)});$("next").classList.add("hidden")}
+function choose(i,btn){if(locked)return;locked=true;const x=qs[idx];[...$("answers").children].forEach((b,j)=>{b.disabled=true;if(j===x.c)b.classList.add("correct")});if(i===x.c){score+=100;$("score").textContent=score;$("feedback").innerHTML="✅ <strong>Oikein!</strong> "+x.e}else{btn.classList.add("wrong");$("feedback").innerHTML="❌ <strong>Ei aivan.</strong> "+x.e}$("next").textContent=idx===qs.length-1?"Näytä tulos →":"Seuraava kysymys →";$("next").classList.remove("hidden");$("bar").style.width=`${(idx+1)/qs.length*100}%`}
+function next(){idx++;if(idx<qs.length)render();else finish()}
+function finish(){$("game").classList.add("hidden");$("results").classList.remove("hidden");$("finalScore").textContent=`${score} / 800`;let t=score===800?"Täydellistä! Olet verkon pelastaja.":score>=500?"Hyvää työtä! IT-perustaidot ovat hyvin hallussa.":"Hyvä yritys! Pelaa uudelleen ja kertaa oikeat vastaukset."; $("resultText").textContent=t;$("counter").textContent="8/8";$("bar").style.width="100%"}
+$("start").onclick=start;$("next").onclick=next;$("restart").onclick=start;
+</script>
+
+<!-- Vibe-pelit: yhteinen paluupainike ja käyttämättömyysohjaus -->
+<style id="vibe-navigation-style">
+  #vibe-back-to-games-wrap { width:100%; max-width:100%; box-sizing:border-box; display:flex; justify-content:center; align-items:center; margin:24px auto 30px; padding:0 16px; grid-column:1 / -1; flex-shrink:0; }
+  #vibe-back-to-games { display:inline-flex!important; align-items:center!important; justify-content:center!important; box-sizing:border-box!important; background:#44e5cc!important; color:#071627!important; border:2px solid #f2fffd!important; border-radius:999px!important; padding:16px 28px!important; font:800 18px/1.25 system-ui,Arial,sans-serif!important; text-decoration:none!important; box-shadow:0 5px 22px #0007!important; max-width:100%!important; min-height:56px!important; cursor:pointer!important; text-align:center!important; }
+  #vibe-back-to-games:hover,#vibe-back-to-games:focus-visible {background:#a5fff0!important;outline:3px solid #ffffff!important;outline-offset:2px!important;}
+  @media(max-width:420px){#vibe-back-to-games {font-size:17px!important;padding:15px 22px!important;}}
+</style>
+<div id="vibe-back-to-games-wrap"><a id="vibe-back-to-games" href="index.html" aria-label="Valitse toinen peli">Valitse toinen peli</a></div>
+<script id="vibe-idle-navigation">
+(function () {
+  'use strict';
+  const IDLE_AFTER_MS = 60 * 1000; // Muuta aikaa tästä (millisekuntia).
+  let lastActivity = Date.now();
+  let timeoutId;
+  function goToGames() { window.location.replace('index.html'); }
+  function resetIdleCountdown() {
+    lastActivity = Date.now();
+    window.clearTimeout(timeoutId);
+    timeoutId = window.setTimeout(goToGames, IDLE_AFTER_MS);
+  }
+  ['pointerdown', 'pointermove', 'keydown', 'touchstart', 'wheel'].forEach(function(type) {
+    document.addEventListener(type, resetIdleCountdown, {passive:true, capture:true});
+  });
+  // Tarkistetaan aika myös, kun selain palautuu taustalta.
+  document.addEventListener('visibilitychange', function() {
+    if (!document.hidden && Date.now() - lastActivity >= IDLE_AFTER_MS) goToGames();
+  });
+  resetIdleCountdown();
+})();
+</script>
+</body>
+</html>

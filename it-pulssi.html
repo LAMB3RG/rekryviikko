@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="fi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101326">
+  <title>IT-pulssi – testaa IT-tietosi</title>
+  <link rel="stylesheet" href="it-pulssi/it-pulssi.css">
+  <script src="it-pulssi/it-pulssi.js" defer></script>
+</head>
+<body>
+  <main class="game-shell">
+    <header class="site-header">
+      <p class="eyebrow">Tulevaisuus on koodattu</p>
+      <h1>IT<span>-</span>pulssi</h1>
+    </header>
+
+    <section class="game-card" aria-labelledby="start-title" id="start-screen">
+      <div class="card-decoration" aria-hidden="true">01 / 05</div>
+      <p class="eyebrow">Pikapeli · 5 kysymystä</p>
+      <h2 id="start-title">Löytyykö sinusta IT-osaaja?</h2>
+      <p class="intro">Testaa, mitä tiedät IT-alasta ja sen opiskelusta. Valitse jokaisesta kysymyksestä yksi vastaus ja katso, montako saat oikein. Peliaikaa on enintään viisi minuuttia.</p>
+      <button class="button button-primary" id="start-button" type="button">Aloita peli <span aria-hidden="true">→</span></button>
+    </section>
+
+    <section class="game-card" aria-labelledby="question" id="quiz-screen" hidden>
+      <div class="question-topline">
+        <p class="eyebrow">IT-pulssi / tietovisa</p>
+        <p class="question-count" id="question-count"></p>
+        <p class="game-timer" id="game-timer" aria-label="Aikaa jäljellä">5:00</p>
+      </div>
+      <div
+        class="progress-track"
+        id="progress-track"
+        role="progressbar"
+        aria-label="Pelin eteneminen"
+        aria-valuemin="0"
+        aria-valuemax="5"
+        aria-valuenow="0"
+      >
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+      <h2 id="question" tabindex="-1"></h2>
+      <div class="answer-list" id="answer-list"></div>
+      <p class="feedback" id="feedback" role="status" aria-live="polite"></p>
+      <div class="quiz-actions">
+        <a class="button button-secondary" href="index.html">Palaa alkuun</a>
+        <button class="button button-primary next-button" id="next-button" type="button" hidden>Seuraava kysymys <span aria-hidden="true">→</span></button>
+      </div>
+    </section>
+
+    <section class="game-card result-card" aria-labelledby="result-title" id="result-screen" hidden>
+      <p class="eyebrow">Peli pelattu</p>
+      <h2 id="result-title">Hyvä veto!</h2>
+      <p class="result-score" id="result-score"></p>
+      <p class="intro" id="result-message"></p>
+      <button class="button button-primary" id="restart-button" type="button">Pelaa uudelleen <span aria-hidden="true">↻</span></button>
+    </section>
+
+    <footer class="site-footer">Viisi kysymystä. Montako IT-pulssia osuu kohdalleen?</footer>
+  </main>
+
+<!-- Vibe-pelit: yhteinen paluupainike ja käyttämättömyysohjaus -->
+<style id="vibe-navigation-style">
+  #vibe-back-to-games-wrap { width:100%; max-width:100%; box-sizing:border-box; display:flex; justify-content:center; align-items:center; margin:24px auto 30px; padding:0 16px; grid-column:1 / -1; flex-shrink:0; }
+  #vibe-back-to-games { display:inline-flex!important; align-items:center!important; justify-content:center!important; box-sizing:border-box!important; background:#44e5cc!important; color:#071627!important; border:2px solid #f2fffd!important; border-radius:999px!important; padding:16px 28px!important; font:800 18px/1.25 system-ui,Arial,sans-serif!important; text-decoration:none!important; box-shadow:0 5px 22px #0007!important; max-width:100%!important; min-height:56px!important; cursor:pointer!important; text-align:center!important; }
+  #vibe-back-to-games:hover,#vibe-back-to-games:focus-visible {background:#a5fff0!important;outline:3px solid #ffffff!important;outline-offset:2px!important;}
+  @media(max-width:420px){#vibe-back-to-games {font-size:17px!important;padding:15px 22px!important;}}
+</style>
+<div id="vibe-back-to-games-wrap"><a id="vibe-back-to-games" href="index.html" aria-label="Valitse toinen peli">Valitse toinen peli</a></div>
+<script id="vibe-idle-navigation">
+(function () {
+  'use strict';
+  const IDLE_AFTER_MS = 60 * 1000; // Muuta aikaa tästä (millisekuntia).
+  let lastActivity = Date.now();
+  let timeoutId;
+  function goToGames() { window.location.replace('index.html'); }
+  function resetIdleCountdown() {
+    lastActivity = Date.now();
+    window.clearTimeout(timeoutId);
+    timeoutId = window.setTimeout(goToGames, IDLE_AFTER_MS);
+  }
+  ['pointerdown', 'pointermove', 'keydown', 'touchstart', 'wheel'].forEach(function(type) {
+    document.addEventListener(type, resetIdleCountdown, {passive:true, capture:true});
+  });
+  // Tarkistetaan aika myös, kun selain palautuu taustalta.
+  document.addEventListener('visibilitychange', function() {
+    if (!document.hidden && Date.now() - lastActivity >= IDLE_AFTER_MS) goToGames();
+  });
+  resetIdleCountdown();
+})();
+</script>
+</body>
+</html>

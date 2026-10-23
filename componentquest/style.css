@@ -1,0 +1,67 @@
+:root{
+  color-scheme:dark;
+  text-rendering:geometricPrecision;
+  --bg:#070d1b;
+  --panel:#101b31;
+  --text:#f2f7ff;
+  --muted:#91a9c4;
+  --mint:#54efd3;
+  --blue:#58aaf6;
+  --violet:#a297ff;
+  --line:rgba(128,177,222,.23);
+}
+*{box-sizing:border-box}
+html{min-height:100%;background:var(--bg)}
+body{
+  margin:0;
+  min-height:100vh;
+  padding:25px 24px 30px;
+  color:var(--text);
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  background:
+    radial-gradient(ellipse at 16% -10%,rgba(43,105,164,.25),transparent 38%),
+    radial-gradient(ellipse at 88% 4%,rgba(89,73,180,.14),transparent 31%),
+    linear-gradient(145deg,#0a1325 0%,#070d1b 52%,#050914 100%);
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+.page{width:min(1240px,100%);margin:0 auto}
+.site-header{display:flex;align-items:center;gap:14px;margin:0 0 17px;padding:0 2px}
+.brand-mark{
+  position:relative;display:grid;place-items:center;flex:0 0 52px;width:52px;height:52px;
+  border:1px solid rgba(103,244,222,.64);border-radius:16px;
+  background:linear-gradient(145deg,rgba(73,232,211,.2),rgba(101,127,255,.14));
+  box-shadow:0 0 0 5px rgba(80,225,215,.035),0 8px 28px rgba(0,0,0,.26),inset 0 1px 0 rgba(255,255,255,.14);
+  color:#a5fff1;font-size:16px;font-weight:950;letter-spacing:-1.2px;
+}
+.brand-mark:before{content:"";position:absolute;left:-5px;top:10px;bottom:10px;width:3px;border-radius:4px;background:var(--mint);box-shadow:0 0 12px rgba(84,239,211,.8)}
+.eyebrow{font-size:10px;letter-spacing:2.4px;color:#7de9df;font-weight:850;margin:0 0 5px;text-transform:uppercase}
+.site-header h1{margin:0;font-size:clamp(24px,3.2vw,34px);line-height:1;font-weight:900;letter-spacing:-1.15px;color:#f3f7ff}
+.site-header h1 span{color:var(--mint);text-shadow:0 0 23px rgba(77,240,212,.2)}
+.header-chip{margin-left:auto;display:flex;align-items:center;gap:9px;border:1px solid rgba(123,170,210,.22);background:linear-gradient(135deg,rgba(15,29,49,.94),rgba(8,17,32,.9));padding:10px 14px;border-radius:999px;color:#b5c9df;font-size:10px;font-weight:800;letter-spacing:.85px;white-space:nowrap;box-shadow:inset 0 1px 0 rgba(255,255,255,.045)}
+.status-dot{width:7px;height:7px;border-radius:50%;background:#62f3c2;box-shadow:0 0 10px rgba(98,243,194,.86)}
+.game-frame{position:relative;overflow:hidden;border:1px solid rgba(105,175,221,.43);border-radius:23px;background:#050b19;box-shadow:0 30px 95px rgba(0,0,0,.52),0 0 0 1px rgba(111,167,220,.045),0 0 40px rgba(43,142,196,.075)}
+.game-frame:before{content:"";position:absolute;z-index:3;pointer-events:none;inset:0;border-radius:inherit;box-shadow:inset 0 1px 0 rgba(255,255,255,.16),inset 0 0 0 1px rgba(2,10,22,.45)}
+canvas{display:block;width:100%;height:auto;aspect-ratio:16/9;outline:none;touch-action:none;position:relative;z-index:1;background:#071226;image-rendering:auto;filter:none}
+canvas:focus-visible{outline:2px solid rgba(84,239,211,.9);outline-offset:-4px}
+.canvas-glow{display:none}
+.below-game{display:flex;gap:15px;justify-content:space-between;align-items:center;padding:15px 5px 0;color:var(--muted);font-size:12px}
+.controls-help{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.keycap{display:inline-flex;align-items:center;justify-content:center;min-width:23px;height:23px;padding:0 6px;border:1px solid rgba(136,177,216,.28);border-bottom-width:2px;border-radius:6px;background:linear-gradient(180deg,rgba(28,48,74,.96),rgba(14,28,48,.96));color:#e5f1ff;font-size:10px;font-weight:850;box-shadow:0 2px 6px rgba(0,0,0,.15)}
+.help-separator{color:#526b89;margin:0 5px}
+.offline-note{white-space:nowrap;color:#819cba;font-size:11px}
+.offline-icon{color:var(--mint);margin-right:5px;text-shadow:0 0 12px rgba(84,239,211,.5)}
+@media(min-width:1450px){body{padding-top:32px}.site-header{margin-bottom:20px}.game-frame{border-radius:25px}}
+@media(max-width:700px){
+  body{padding:13px 10px 20px}
+  .site-header{gap:10px;margin-bottom:12px}
+  .brand-mark{width:42px;height:42px;flex-basis:42px;border-radius:13px;font-size:14px}
+  .eyebrow{font-size:8px;letter-spacing:1.6px}
+  .site-header h1{font-size:23px}
+  .header-chip{font-size:8px;padding:8px 9px;gap:6px;letter-spacing:.25px}
+  .status-dot{width:6px;height:6px}
+  .game-frame{border-radius:14px}
+  .canvas-glow{border-radius:14px}
+  .below-game{align-items:flex-start;flex-direction:column;gap:9px;padding:12px 3px 0}
+}
+@media(max-width:390px){.header-chip{display:none}.site-header h1{font-size:22px}}
